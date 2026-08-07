@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "ae2online:block/online_terminal"
+        }
+    }
+}

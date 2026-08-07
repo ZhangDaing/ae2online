@@ -1,0 +1,5 @@
+{
+    "java.compile.nullAnalysis.mode": "disabled",
+    "commentTranslate.source": "Bing",
+    "java.configuration.updateBuildConfiguration": "automatic"
+}
