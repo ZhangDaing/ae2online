@@ -1,6 +1,7 @@
 package com.zhangdaing.ae2online.blockentity;
 
 import com.zhangdaing.ae2online.ae2online;
+import com.zhangdaing.ae2online.web.TerminalRegistry;
 
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGrid;
@@ -34,4 +35,13 @@ public class OnlineTerminalBlockEntity extends AENetworkBlockEntity {
         return getMainNode().isOnline();
     }
 
+    public void RegisterOnStateChange(boolean isOnline){
+        if (isOnline) {
+            // 注册在线终端实体
+            TerminalRegistry.registerTerminal(this);
+        } else {
+            // 注销在线终端实体
+            TerminalRegistry.unregisterTerminal(this);
+        }
+    }
 }
