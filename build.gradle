@@ -73,6 +73,7 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
+    mavenCentral()
     // ae2仓库
     maven {
         name = "Modmaven"
@@ -100,6 +101,19 @@ dependencies {
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
 
     implementation("io.javalin:javalin:${javalin_version}")
+    minecraftLibrary("io.javalin:javalin:${javalin_version}"){
+        exclude group: 'org.jetbrains', module: 'annotations'
+    }
+
+    implementation ("org.slf4j:slf4j-simple:1.7.36")
+    minecraftLibrary ("org.slf4j:slf4j-simple:1.7.36")
+
+    implementation ("com.fasterxml.jackson.core:jackson-databind:2.13.2")
+    minecraftLibrary ("com.fasterxml.jackson.core:jackson-databind:2.13.2")
+
+    jarJar ("io.javalin:javalin:[7.2,7.3)")
+    jarJar ("org.slf4j:slf4j-simple:[1.7,1.8)")
+    jarJar ("com.fasterxml.jackson.core:jackson-databind:[2.13,2.14)")
 } 
  
 // This block of code expands all declared replace properties in the specified resource targets.

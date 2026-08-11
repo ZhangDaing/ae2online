@@ -1,6 +1,7 @@
 package com.zhangdaing.ae2online;
 
 import com.zhangdaing.ae2online.blockentity.OnlineTerminalBlockEntity;
+import com.zhangdaing.ae2online.web.WebServer;
 import com.zhangdaing.ae2online.block.OnlineTerminalBlock;
 
 import net.minecraft.world.item.BlockItem;
@@ -10,6 +11,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -55,6 +58,13 @@ public class ae2online
         MinecraftForge.EVENT_BUS.register(this);
 
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+
+        // 服务器启动时开 Web 服务器，停止时关
+        MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent e) -> WebServer.startsever());
+        MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> WebServer.stop());
     }
+
+
 
 }

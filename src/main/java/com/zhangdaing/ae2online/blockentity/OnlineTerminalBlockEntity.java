@@ -44,4 +44,11 @@ public class OnlineTerminalBlockEntity extends AENetworkBlockEntity {
             TerminalRegistry.unregisterTerminal(this);
         }
     }
+
+    @Override
+    public void onMainNodeStateChanged(appeng.api.networking.IGridNodeListener.State reason) {
+        super.onMainNodeStateChanged(reason);
+        // 上线时注册到 Web 终端列表，离线时注销
+        RegisterOnStateChange(isOnline());
+    }
 }
