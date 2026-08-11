@@ -1,5 +1,10 @@
 {
     "java.compile.nullAnalysis.mode": "disabled",
     "commentTranslate.source": "Bing",
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+
+    "files.watcherExclude": {
+        "**/AppliedWebTerminal-main/**": true,
+        "**/Applied-Energistics-2-forge-1.20.1/**": true
+    }
 }
