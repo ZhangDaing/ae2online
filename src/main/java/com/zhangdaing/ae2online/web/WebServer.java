@@ -51,8 +51,10 @@ public class WebServer {
                 }
                 // 非本地请求，拒绝
                 ctx.status(403).result("Forbidden");
-            });
-                //
+                });
+
+                // 配置路由
+                // 返回存储物品列表
                 config.routes.get("/storage", ctx -> {
                 var grid = findGrid();
                 if (grid == null){
@@ -61,12 +63,34 @@ public class WebServer {
                 }
                 var storage = grid.getStorageService().getCachedInventory();
                 var items = storage.keySet().stream().map(
-                    key -> Map.of(
-                        "id", key.getDisplayName().getString(),
-                        "count", storage.get(key)))
-                    .toList();
+                    key -> {
+                        var id = key.getId();
+                        String modid = id.getNamespace();
+                        String itemid = id.getPath();
+                        return Map.of(
+                            "id", key.getDisplayName().getString(),
+                            "count", storage.get(key),
+                            "icon", "/icon/" + modid + "/" + itemid
+                        );
+                    }
+                ).toList();
                 ctx.json(Map.of("items", items));
-            });
+                });
+
+                // 返回图标
+                config.routes.get("/icon/{modid}/{itemid}", ctx -> {
+                    String modid = ctx.pathParam("modid");
+                    String itemid = ctx.pathParam("itemid");
+                    String iconPath = com.zhangdaing.ae2online.Config.iconPath;
+                    java.nio.file.Path icon = java.nio.file.Paths.get("./" + iconPath, modid+ "__" + itemid + ".png");
+                    if (java.nio.file.Files.exists(icon)) {
+                        ctx.contentType("image/png");
+                        ctx.result(java.nio.file.Files.readAllBytes(icon));
+                    } else {
+                        ctx.status(404);
+                    }
+                });
+
             LOGGER.info("Web server started on port 11595");
             }).start(11595); // 启动服务器，监听11595端口
         }

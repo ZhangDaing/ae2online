@@ -36,7 +36,17 @@ public class Config
             .comment("A list of items to log on common setup.")
             .defineListAllowEmpty("items", List.of("minecraft:iron_ingot"), Config::validateItemName);
 
+
+    // 配置项
+    public static final ForgeConfigSpec.ConfigValue<String> ICON_PATH = BUILDER
+            .comment("IconExporter 导出的文件夹",
+                        "可以使用其他工具导出，只需要确保格式相同",
+                        "例: icon-exports-x64, icon-exports-x128")
+            .define("iconPath", "icon-exports-x32");
     static final ForgeConfigSpec SPEC = BUILDER.build();
+    // 静态字段
+    public static String iconPath;
+
 
     public static boolean logDirtBlock;
     public static int magicNumber;
@@ -51,6 +61,10 @@ public class Config
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)
     {
+
+        // 同步图标路径
+        iconPath = ICON_PATH.get();
+
         logDirtBlock = LOG_DIRT_BLOCK.get();
         magicNumber = MAGIC_NUMBER.get();
         magicNumberIntroduction = MAGIC_NUMBER_INTRODUCTION.get();
