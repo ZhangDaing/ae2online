@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://bkpf3s3xr2jtd"]
+
+[ext_resource type="Shader" uid="uid://dtf35f47ak54o" path="res://frontend/Shader/anime_card.gdshader" id="1_y0sm7"]
+
+[resource]
+shader = ExtResource("1_y0sm7")
+shader_parameter/blur_lod = 3.0
+shader_parameter/base_color = Color(0, 0, 0, 0.8)

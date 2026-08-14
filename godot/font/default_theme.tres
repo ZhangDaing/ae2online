@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3 uid="uid://1m4r5i2sj4iy"]
+
+[ext_resource type="FontFile" uid="uid://kw5h5kupdxw4" path="res://font/fusion-pixel-10px-monospaced-zh_hans.ttf" id="1_13qh5"]
+
+[resource]
+default_font = ExtResource("1_13qh5")
+default_font_size = 20

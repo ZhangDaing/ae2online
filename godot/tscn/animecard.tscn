@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://bcr4osuf0tth8"]
+
+[ext_resource type="Script" uid="uid://0cqmiqrrmqrs" path="res://gd/item.gd" id="1_koht2"]
+
+[node name="Item" type="Control" unique_id=378712883]
+custom_minimum_size = Vector2(64, 64)
+custom_maximum_size = Vector2(64, 64)
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_koht2")
+
+[node name="IconTexture" type="TextureRect" parent="." unique_id=1785223360]
+custom_minimum_size = Vector2(32, 32)
+custom_maximum_size = Vector2(32, 32)
+layout_mode = 1
+offset_right = 32.0
+offset_bottom = 32.0
+scale = Vector2(2, 2)
+
+[node name="CountLabel" type="Label" parent="." unique_id=306856666]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -40.0
+offset_top = -20.0
+grow_horizontal = 0
+grow_vertical = 0

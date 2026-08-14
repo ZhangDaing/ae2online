@@ -1,0 +1,32 @@
+[gd_resource type="Theme" format=3 uid="uid://dl817wlk6v10n"]
+
+[ext_resource type="Texture2D" uid="uid://cndifxji1rpx6" path="res://assest/Dark/Dark_background.tres" id="1_d41j6"]
+[ext_resource type="Texture2D" uid="uid://ctg5u8qfpmk7k" path="res://assest/Dark/Dark_scroll_container.tres" id="2_5aohk"]
+[ext_resource type="Texture2D" uid="uid://co76h2e75nxy8" path="res://assest/Dark/Dark_background_panel.tres" id="2_tlniy"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_jy7de"]
+texture = ExtResource("1_d41j6")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_08lye"]
+texture = ExtResource("2_tlniy")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_d41j6"]
+texture = ExtResource("2_5aohk")
+expand_margin_left = 64.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[resource]
+Background/base_type = &"Panel"
+Background/styles/panel = SubResource("StyleBoxTexture_jy7de")
+BackgroundPanel/base_type = &"Panel"
+BackgroundPanel/styles/panel = SubResource("StyleBoxTexture_08lye")
+ScrollContainer/styles/panel = SubResource("StyleBoxTexture_d41j6")
