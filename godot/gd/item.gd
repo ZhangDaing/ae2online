@@ -1,28 +1,29 @@
 extends Control
 
-@onready var cover = $ClipGround/VBoxContainer/Cover
-@onready var title = $ClipGround/VBoxContainer/Title
+@onready var icon_texture = $IconTexture
+@onready var count_label = $CountLabel
 
 # 后端请求地址
 const BACKEND_URL = "http://127.0.0.1:11595"
 
 var card_data: Dictionary = {}
-
+#---------------------------------------------------
+# ready函数
 func _ready() -> void:
 	# 节点进入场景树后，如果已有数据则刷新 UI
 	if not card_data.is_empty():
 		set_data(card_data)
-
+#---------------------------------------------------
 # 设置卡片数据
 func set_data(data: Dictionary) -> void:
 	card_data = data
 	if is_node_ready():
-		title.text = card_data.get("id","未知物品")
+		count_label.text = str(card_data.get("count", 0))
 		load_cover()
 
-# 加载封面
+# 加载图标
 func load_cover() -> void:
-	var icon_url = card_data.get("icon"," ")
+	var icon_url = card_data.get("icon","")
 	if icon_url == "":
 		return
 	var full_url = BACKEND_URL + icon_url
@@ -33,7 +34,7 @@ func load_cover() -> void:
 	if error != OK:
 		loader.queue_free()
 
-# 加载封面以后的回调函数
+# 加载图标以后的回调函数
 func _on_cover_loaded(
 	result: int,
 	response_code: int,
@@ -46,17 +47,17 @@ func _on_cover_loaded(
 	loader.queue_free()
 
 	if result != HTTPRequest.RESULT_SUCCESS:
-		print("封面网络错误")
+		print("图标网络错误")
 		return
 	if response_code != 200:
-		print("封面请求失败，状态码: ", response_code)
+		print("图标请求失败，状态码: ", response_code)
 		return
 
 	var image = Image.new()
 	var err = image.load_png_from_buffer(body)
 	if err != OK:
-		print("封面图片解析失败")
+		print("图标图片解析失败")
 		return
 	
 	var texture = ImageTexture.create_from_image(image)
-	cover.texture = texture
+	icon_texture.texture = texture

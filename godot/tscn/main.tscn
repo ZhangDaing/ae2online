@@ -106,8 +106,13 @@ vertical_scroll_mode = 3
 
 [node name="CardContainer" type="GridContainer" parent="Background/VBoxContainer/ScrollContainer/ScrollContainer" unique_id=59622650]
 layout_mode = 2
-theme_override_constants/h_separation = 16
-columns = 5
+size_flags_horizontal = 3
+size_flags_vertical = 3
+offset_transform_enabled = true
+offset_transform_position = Vector2(8, 8)
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 9
 
 [node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=1655520331]
 

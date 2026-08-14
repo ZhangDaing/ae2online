@@ -3,25 +3,24 @@ extends Control
 #---------------------------------------------------
 # 网络请求节点
 @onready var http_request = $HTTPRequest
-# 卡片容器
-@onready var scroll_container = $VBoxContainer/ScrollContainer
-@onready var card_container = $VBoxContainer/ScrollContainer/CardContainer
+# 物品容器
+@onready var card_container = $Background/VBoxContainer/ScrollContainer/ScrollContainer/CardContainer
+# 检索框
+@onready var search_box = $Background/VBoxContainer/SortSearch/LineEdit
 
 # 预加载卡片场景
-const CARD_SCENCE = preload("res://tscn/animecard.tscn")
+const CARD_SCENCE = preload("res://tscn/item.tscn")
 # 后端请求地址
 const BACKEND_URL = "http://127.0.0.1:11595"
 
+# 物品缓存(用于检索)
+var item_cache:Array = []
 #---------------------------------------------------
 # ready函数
 func _ready():
 	# 初始化
 	request_data()
-
-# process函数
-func _process(_delta: float) -> void:
-	pass
-
+	search_box.text_changed.connect(_on_search_changed)
 #---------------------------------------------------
 # 核心函数，请求后端数据
 # 请求数据
@@ -53,11 +52,8 @@ func _on_request_completed(
 		print("数据解析失败")
 		return
 	
-	# 根据模式返回内容
-	var item:Array = []
-	item = data.get("items", [])
-	create_cards(item)
-
+	item_cache = data.get("items", []) # 缓存所有物品数据
+	create_cards(item_cache) # 创建卡片
 #---------------------------------------------------
 # 应用返回的数据
 # 遍历生成卡片
@@ -67,34 +63,20 @@ func create_cards(data: Array) -> void:
 		var card = CARD_SCENCE.instantiate()
 		card.set_data(item)
 		card_container.add_child(card)
-	cover_loading = true
-	load_cover()
-
-# 分页添加卡片
-func append_cards(data:Array) -> void:
-	for item in data:
-		var card = CARD_SCENCE.instantiate()
-		card.set_data(item)
-		card_container.add_child(card)
-	cover_loading = true
-	load_cover()
-
-# 加载卡片封面
-var cover_loading:bool = false # 标志可以加载封面，防止竞态条件
-var cover_loading_task:bool = false # 标志加载封面任务是否在运行
-func load_cover() -> void:
-	for card in card_container.get_children():
-		if not cover_loading:
-			return
-		if not is_instance_valid(card):
-			continue
-		card.load_cover()
-		await get_tree().create_timer(0.2).timeout
 
 # 清空卡片容器
 func _clear_cards() -> void:
-	cover_loading = false
 	for child in card_container.get_children():
 		child.queue_free()
 	await get_tree().process_frame
 #---------------------------------------------------
+# 检索功能
+func _on_search_changed(new_text:String) -> void:
+	if new_text == "":
+		create_cards(item_cache)
+		return
+	var filtered_items:Array = []
+	for item in item_cache:
+		if new_text.to_lower() in item.get("name", "").to_lower():
+			filtered_items.append(item)
+	create_cards(filtered_items)
