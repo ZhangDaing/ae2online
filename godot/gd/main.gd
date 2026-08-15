@@ -4,7 +4,7 @@ extends Control
 # 网络请求节点
 @onready var http_request = $HTTPRequest
 # 物品容器
-@onready var card_container = $Background/VBox/Scroll/ScrollContainer/ItemContainer
+@onready var card_container = $Background/VBox/Scroll/ScrollContainer/Margin/ItemContainer
 # 检索框
 @onready var search_box = $Background/VBox/Search/LineEdit
 
@@ -27,7 +27,6 @@ var current_sort_dir:SortDir = SortDir.ASC
 func _ready():
 	# 初始化
 	request_data()
-	search_box.text_changed.connect(_on_search_changed)
 #---------------------------------------------------
 # 核心函数，请求后端数据
 # 请求数据

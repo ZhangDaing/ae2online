@@ -18,7 +18,7 @@ func _ready() -> void:
 func set_data(data: Dictionary) -> void:
 	card_data = data
 	if is_node_ready():
-		count_label.text = str(card_data.get("count", 0))
+		count_label.text = "%d" % card_data.get("count", 0)
 		load_cover()
 
 # 加载图标
