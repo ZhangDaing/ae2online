@@ -35,7 +35,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_type_variation = &"Background"
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Background" unique_id=72165906]
+[node name="VBox" type="VBoxContainer" parent="Background" unique_id=72165906]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -50,7 +50,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
 
-[node name="SortSearch" type="Panel" parent="Background/VBoxContainer" unique_id=1299671247]
+[node name="Search" type="Panel" parent="Background/VBox" unique_id=1299671247]
 custom_minimum_size = Vector2(364, 40)
 custom_maximum_size = Vector2(364, 40)
 layout_mode = 2
@@ -59,7 +59,7 @@ offset_transform_enabled = true
 offset_transform_position = Vector2(150, 0)
 theme_type_variation = &"BackgroundPanel"
 
-[node name="LineEdit" type="LineEdit" parent="Background/VBoxContainer/SortSearch" unique_id=2107045925]
+[node name="LineEdit" type="LineEdit" parent="Background/VBox/Search" unique_id=2107045925]
 custom_minimum_size = Vector2(356, 32)
 layout_mode = 1
 anchors_preset = 8
@@ -76,14 +76,14 @@ grow_vertical = 2
 offset_transform_position = Vector2(128, 0)
 flat = true
 
-[node name="ScrollContainer" type="Panel" parent="Background/VBoxContainer" unique_id=1149426005]
+[node name="Scroll" type="Panel" parent="Background/VBox" unique_id=1149426005]
 custom_minimum_size = Vector2(664, 500)
 custom_maximum_size = Vector2(664, 500)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_type_variation = &"BackgroundPanel"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Background/VBoxContainer/ScrollContainer" unique_id=1316033388]
+[node name="ScrollContainer" type="ScrollContainer" parent="Background/VBox/Scroll" unique_id=1316033388]
 custom_minimum_size = Vector2(656, 492)
 custom_maximum_size = Vector2(656, -1)
 layout_mode = 1
@@ -104,7 +104,7 @@ size_flags_stretch_ratio = 0.0
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 3
 
-[node name="CardContainer" type="GridContainer" parent="Background/VBoxContainer/ScrollContainer/ScrollContainer" unique_id=59622650]
+[node name="ItemContainer" type="GridContainer" parent="Background/VBox/Scroll/ScrollContainer" unique_id=59622650]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

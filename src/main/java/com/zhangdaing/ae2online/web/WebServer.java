@@ -65,12 +65,13 @@ public class WebServer {
                 var items = storage.keySet().stream().map(
                     key -> {
                         var id = key.getId();
-                        String modid = id.getNamespace();
-                        String itemid = id.getPath();
                         return Map.of(
                             "id", key.getDisplayName().getString(),
                             "count", storage.get(key),
-                            "icon", "/icon/" + modid + "/" + itemid
+                            "icon", "/icon/" + id.getNamespace() + "/" + id.getPath(),
+                            "modid", id.getNamespace(),
+                            "amountPerUnit", key.getAmountPerUnit(),
+                            "rawId", id.toString()
                         );
                     }
                 ).toList();

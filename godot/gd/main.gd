@@ -4,9 +4,9 @@ extends Control
 # 网络请求节点
 @onready var http_request = $HTTPRequest
 # 物品容器
-@onready var card_container = $Background/VBoxContainer/ScrollContainer/ScrollContainer/CardContainer
+@onready var card_container = $Background/VBox/Scroll/ScrollContainer/ItemContainer
 # 检索框
-@onready var search_box = $Background/VBoxContainer/SortSearch/LineEdit
+@onready var search_box = $Background/VBox/Search/LineEdit
 
 # 预加载卡片场景
 const CARD_SCENCE = preload("res://tscn/item.tscn")
@@ -15,6 +15,13 @@ const BACKEND_URL = "http://127.0.0.1:11595"
 
 # 物品缓存(用于检索)
 var item_cache:Array = []
+
+# 排序方式
+enum SortType {NAME,AMOUNT,MOD}
+enum  SortDir{ASC,DESC}
+
+var current_sort_type:SortType = SortType.AMOUNT
+var current_sort_dir:SortDir = SortDir.ASC
 #---------------------------------------------------
 # ready函数
 func _ready():
@@ -53,6 +60,7 @@ func _on_request_completed(
 		return
 	
 	item_cache = data.get("items", []) # 缓存所有物品数据
+	item_cache = sort_items(item_cache)
 	create_cards(item_cache) # 创建卡片
 #---------------------------------------------------
 # 应用返回的数据
@@ -77,6 +85,58 @@ func _on_search_changed(new_text:String) -> void:
 		return
 	var filtered_items:Array = []
 	for item in item_cache:
-		if new_text.to_lower() in item.get("name", "").to_lower():
+		if new_text.to_lower() in item.get("id", "").to_lower():
 			filtered_items.append(item)
+	filtered_items = sort_items(filtered_items)
 	create_cards(filtered_items)
+
+# 排序算法
+func sort_items(items:Array) -> Array:
+	var sorted_items = items.duplicate()
+	match current_sort_type:
+		SortType.NAME:
+			sorted_items.sort_custom(_sort_by_name)
+		SortType.AMOUNT:
+			sorted_items.sort_custom(_sort_by_amount)
+		SortType.MOD:
+			sorted_items.sort_custom(_sort_by_mod)
+	return sorted_items
+
+func _sort_by_name(a, b) -> bool:
+	var cmp = _cmp_ignore_case(a.get("id", ""), b.get("id", ""))
+
+	if current_sort_dir == SortDir.DESC:
+		cmp = -cmp
+	return cmp < 0
+
+func _sort_by_amount(a, b) -> bool:
+	var amt_a = float(a["count"]) / float(a.get("amountPerUnit", 1))
+	var amt_b = float(b["count"]) / float(b.get("amountPerUnit", 1))
+	var cmp = 0
+
+	if amt_a != amt_b:
+		cmp = amt_a - amt_b
+	else:
+		cmp = _cmp_ignore_case(a.get("id", ""), b.get("id", ""))
+
+	if current_sort_dir == SortDir.DESC:
+		cmp = -cmp
+	return cmp < 0
+
+func _sort_by_mod(a, b) -> bool:
+	var cmp = _cmp_ignore_case(a.get("modid", ""), b.get("modid", ""))
+	if cmp == 0:
+		cmp = _cmp_ignore_case(a.get("id", ""), b.get("id", ""))
+	if current_sort_dir == SortDir.DESC:
+		cmp = -cmp
+	return cmp < 0
+
+# 忽略大小写
+func _cmp_ignore_case(a:String, b:String) -> int:
+	var lower_a = a.to_lower()
+	var lower_b = b.to_lower()
+	if lower_a < lower_b:
+		return -1
+	if lower_a > lower_b:
+		return 1
+	return 0
