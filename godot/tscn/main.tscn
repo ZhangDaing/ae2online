@@ -158,4 +158,5 @@ columns = 9
 
 [connection signal="gui_input" from="Background/VBox/Search/LineEdit" to="Background/VBox/Search/LineEdit" method="_on_gui_input"]
 [connection signal="text_changed" from="Background/VBox/Search/LineEdit" to="." method="_on_search_changed"]
+[connection signal="gui_input" from="Background/VBox/Scroll/ScrollContainer" to="Background/VBox/Scroll/ScrollContainer" method="_on_gui_input"]
 [connection signal="request_completed" from="HTTPRequest" to="." method="_on_request_completed"]
