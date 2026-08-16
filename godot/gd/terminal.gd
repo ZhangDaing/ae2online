@@ -13,8 +13,14 @@ const CARD_SCENCE = preload("res://tscn/item.tscn")
 # 后端请求地址
 const BACKEND_URL = "http://127.0.0.1:11595"
 
-# 物品缓存(用于检索)
+# 检索文本
+var search_text = ""
+
+# 原始物品数据缓存
 var item_cache:Array = []
+
+# 已加载的卡片缓存
+var card_cache:Dictionary = {}
 
 # 排序方式
 enum SortType {NAME = 0,AMOUNT = 1,MOD = 2}
@@ -73,23 +79,38 @@ func _on_request_completed(
 		return
 	
 	item_cache = data.get("items", []) # 缓存所有物品数据
-	item_cache = sort_items(item_cache)
-	create_cards(item_cache) # 创建卡片
+	refresh_cards(sort_items(item_cache)) # 创建卡片
 #---------------------------------------------------
 # 应用返回的数据
 # 遍历生成卡片
-func create_cards(data: Array) -> void:
-	await _clear_cards()
-	for item in data:
-		var card = CARD_SCENCE.instantiate()
-		card.set_data(item)
-		card_container.add_child(card)
+func refresh_cards(items:Array) -> void:
+	# 处理检索前的卡片缓存
+	var  keep_cards:Dictionary = {}
 
-# 清空卡片容器
-func _clear_cards() -> void:
-	for child in card_container.get_children():
-		child.queue_free()
-	await get_tree().process_frame
+	for item in items:
+		var item_id = item.get("rawId", "")
+		keep_cards[item_id] = true
+		if item_id in card_cache:
+			# 如果卡片已存在，则更新数据
+			card_cache[item_id].update_data(item)
+		else:
+			# 如果卡片不存在，则创建新的卡片
+			var new_card = CARD_SCENCE.instantiate()
+			new_card.set_data(item)
+			card_container.add_child(new_card)
+			card_cache[item_id] = new_card
+	# 移除不需要的卡片
+	for item_id in card_cache.keys():
+		if not keep_cards.has(item_id):
+			card_cache[item_id].queue_free()
+			card_cache.erase(item_id)
+
+	# 重新排列卡片节点
+	for item in items:
+		var card = card_cache.get(item.get("rawId", ""))
+		card_container.move_child(card, card_container.get_child_count())
+	
+	_apply_search_filter() # 应用检索过滤
 
 func _refresh() -> void:
 	request_data()
@@ -100,15 +121,30 @@ func _on_reflash_timeout() -> void:
 #---------------------------------------------------
 # 检索功能
 func _on_search_changed(new_text:String) -> void:
-	if new_text == "":
-		create_cards(item_cache)
-		return
-	var filtered_items:Array = []
-	for item in item_cache:
-		if new_text.to_lower() in item.get("id", "").to_lower():
-			filtered_items.append(item)
-	filtered_items = sort_items(filtered_items)
-	create_cards(filtered_items)
+	search_text = new_text
+	_apply_search_filter()
+
+func _apply_search_filter() -> void:
+	var filtered_items = filter(item_cache)
+	for item_id in card_cache:
+		if item_id in filtered_items:
+			card_cache[item_id].visible = true
+		else:
+			card_cache[item_id].visible = false
+
+
+func filter(items:Array) -> Dictionary:
+	var filtered:Dictionary = {}
+	if search_text == "":
+		# 检索为空，返回所有物品
+		for item in items:
+			filtered[item.get("rawId", "")] = true
+		return filtered
+	# 否则，返回匹配的物品
+	for item in items:
+		if search_text.to_lower() in item.get("id", "").to_lower():
+			filtered[item.get("rawId", "")] = true
+	return filtered
 
 # 排序算法
 func sort_items(items:Array) -> Array:
@@ -166,7 +202,8 @@ func _cmp_ignore_case(a:String, b:String) -> int:
 func apply_sort_config(sort_type:int, sort_dir:int) -> void:
 	current_sort_type = sort_type as SortType
 	current_sort_dir = sort_dir as SortDir
-	_refresh()
+	# 重新排序并刷新卡片
+	refresh_cards(sort_items(item_cache))
 
 func apply_reflash_time_config(value: float) -> void:
 	reflash_timer.wait_time = value

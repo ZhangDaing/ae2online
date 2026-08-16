@@ -21,6 +21,11 @@ func set_data(data: Dictionary) -> void:
 		count_label.text = "%d" % card_data.get("count", 0)
 		load_cover()
 
+func update_data(data: Dictionary) -> void:
+	card_data = data
+	if is_node_ready():
+		count_label.text = "%d" % card_data.get("count", 0)
+
 # 加载图标
 func load_cover() -> void:
 	var icon_url = card_data.get("icon","")
