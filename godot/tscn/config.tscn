@@ -1,0 +1,150 @@
+[gd_scene format=3 uid="uid://dq24uemkvadvy"]
+
+[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_pcurs"]
+[ext_resource type="Script" uid="uid://c4b74ty0bop4i" path="res://gd/config.gd" id="2_jmvus"]
+
+[node name="Config" type="Control" unique_id=123868002]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_pcurs")
+theme_type_variation = &"Background"
+script = ExtResource("2_jmvus")
+
+[node name="ConfigButton" type="Panel" parent="." unique_id=1483727239]
+layout_mode = 0
+offset_left = 411.0
+offset_top = -297.0
+offset_right = 515.0
+offset_bottom = -239.0
+theme_type_variation = &"Background"
+
+[node name="Button" type="Button" parent="ConfigButton" unique_id=1522766390]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Label" type="Label" parent="ConfigButton" unique_id=390040102]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -9.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Config"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ConfigWindow" type="Panel" parent="." unique_id=428673680]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -352.75
+offset_top = -302.375
+offset_right = 352.75
+offset_bottom = 302.375
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"Background"
+
+[node name="Margin" type="MarginContainer" parent="ConfigWindow" unique_id=827199045]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 24
+
+[node name="Scroll" type="ScrollContainer" parent="ConfigWindow/Margin" unique_id=1249299013]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="ConfigWindow/Margin/Scroll" unique_id=837430665]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Config1" type="HBoxContainer" parent="ConfigWindow/Margin/Scroll/VBox" unique_id=301055591]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="ConfigWindow/Margin/Scroll/VBox/Config1" unique_id=268793914]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "排序方式"
+
+[node name="OptionButton" type="OptionButton" parent="ConfigWindow/Margin/Scroll/VBox/Config1" unique_id=745951048]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+selected = 0
+item_count = 3
+popup/item_0/text = "名称"
+popup/item_0/id = 0
+popup/item_1/text = "数量"
+popup/item_1/id = 1
+popup/item_2/text = "模组id"
+popup/item_2/id = 2
+
+[node name="Config2" type="HBoxContainer" parent="ConfigWindow/Margin/Scroll/VBox" unique_id=577785726]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="ConfigWindow/Margin/Scroll/VBox/Config2" unique_id=818906489]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "排序方向"
+
+[node name="OptionButton" type="OptionButton" parent="ConfigWindow/Margin/Scroll/VBox/Config2" unique_id=135478871]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+selected = 0
+item_count = 2
+popup/item_0/text = "升序"
+popup/item_0/id = 0
+popup/item_1/text = "降序"
+popup/item_1/id = 1
+
+[node name="Config3" type="HBoxContainer" parent="ConfigWindow/Margin/Scroll/VBox" unique_id=805512783]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="ConfigWindow/Margin/Scroll/VBox/Config3" unique_id=648758998]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+
+[node name="OptionButton" type="OptionButton" parent="ConfigWindow/Margin/Scroll/VBox/Config3" unique_id=1042653889]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+selected = 0
+item_count = 3
+popup/item_0/text = "名称"
+popup/item_0/id = 0
+popup/item_1/text = "数量"
+popup/item_1/id = 1
+popup/item_2/text = "模组id"
+popup/item_2/id = 2
+
+[connection signal="pressed" from="ConfigButton/Button" to="." method="_on_button_pressed"]
+[connection signal="item_selected" from="ConfigWindow/Margin/Scroll/VBox/Config1/OptionButton" to="." method="_on_sort_type_selected"]
+[connection signal="item_selected" from="ConfigWindow/Margin/Scroll/VBox/Config2/OptionButton" to="." method="_on_sort_dir_selected"]

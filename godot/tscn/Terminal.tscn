@@ -2,26 +2,47 @@
 
 [ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_pfb6l"]
 [ext_resource type="Script" uid="uid://bid4j17vxylf1" path="res://gd/line_edit.gd" id="1_pthv5"]
+[ext_resource type="Script" uid="uid://cv6wccvoo5tq2" path="res://gd/terminal.gd" id="2_20dwh"]
 [ext_resource type="Script" uid="uid://bktawfmgkn8w8" path="res://gd/scroll_container.gd" id="2_pfb6l"]
 
-[node name="Background" type="Panel" unique_id=1086125948]
+[node name="Terminal" type="Control" unique_id=2139824549]
 custom_minimum_size = Vector2(696, 611)
 custom_maximum_size = Vector2(696, 611)
+layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -344.875
-offset_top = -291.0
+offset_top = -290.0
 offset_right = 351.125
-offset_bottom = 322.0
+offset_bottom = 321.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_pfb6l")
+theme_type_variation = &"Background"
+script = ExtResource("2_20dwh")
+
+[node name="Background" type="Panel" parent="." unique_id=1440842827]
+custom_minimum_size = Vector2(696, 611)
+custom_maximum_size = Vector2(696, 611)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -348.0
+offset_top = -305.5
+offset_right = 348.0
+offset_bottom = 305.5
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_pfb6l")
 theme_type_variation = &"Background"
 
-[node name="VBox" type="VBoxContainer" parent="." unique_id=1058886471]
+[node name="VBox" type="VBoxContainer" parent="Background" unique_id=1058886471]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -36,11 +57,11 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
 
-[node name="Search" type="Control" parent="VBox" unique_id=1184626380]
+[node name="Search" type="Control" parent="Background/VBox" unique_id=1184626380]
 custom_minimum_size = Vector2(364, 40)
 layout_mode = 2
 
-[node name="SearchPanel" type="Panel" parent="VBox/Search" unique_id=551860663]
+[node name="SearchPanel" type="Panel" parent="Background/VBox/Search" unique_id=551860663]
 custom_minimum_size = Vector2(364, 40)
 custom_maximum_size = Vector2(364, 40)
 layout_mode = 1
@@ -57,7 +78,7 @@ grow_vertical = 2
 size_flags_horizontal = 4
 theme_type_variation = &"BackgroundPanel"
 
-[node name="LineEdit" type="LineEdit" parent="VBox/Search" unique_id=1420772452]
+[node name="LineEdit" type="LineEdit" parent="Background/VBox/Search" unique_id=1420772452]
 custom_minimum_size = Vector2(356, 32)
 layout_mode = 1
 anchors_preset = -1
@@ -77,13 +98,13 @@ emoji_menu_enabled = false
 flat = true
 script = ExtResource("1_pthv5")
 
-[node name="Scroll" type="Control" parent="VBox" unique_id=737928836]
+[node name="Scroll" type="Control" parent="Background/VBox" unique_id=737928836]
 custom_minimum_size = Vector2(664, 516)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="ScrollPanel" type="Panel" parent="VBox/Scroll" unique_id=210334633]
+[node name="ScrollPanel" type="Panel" parent="Background/VBox/Scroll" unique_id=210334633]
 custom_minimum_size = Vector2(664, 516)
 custom_maximum_size = Vector2(664, 516)
 layout_mode = 1
@@ -101,7 +122,7 @@ grow_vertical = 2
 size_flags_horizontal = 4
 theme_type_variation = &"BackgroundPanel"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBox/Scroll" unique_id=785667342]
+[node name="ScrollContainer" type="ScrollContainer" parent="Background/VBox/Scroll" unique_id=785667342]
 custom_minimum_size = Vector2(656, 508)
 custom_maximum_size = Vector2(656, -1)
 layout_mode = 1
@@ -124,11 +145,11 @@ horizontal_scroll_mode = 0
 vertical_scroll_mode = 3
 script = ExtResource("2_pfb6l")
 
-[node name="Margin" type="MarginContainer" parent="VBox/Scroll/ScrollContainer" unique_id=831777259]
+[node name="Margin" type="MarginContainer" parent="Background/VBox/Scroll/ScrollContainer" unique_id=831777259]
 layout_mode = 2
 theme_override_constants/margin_bottom = 12
 
-[node name="ItemContainer" type="GridContainer" parent="VBox/Scroll/ScrollContainer/Margin" unique_id=1266195351]
+[node name="ItemContainer" type="GridContainer" parent="Background/VBox/Scroll/ScrollContainer/Margin" unique_id=1266195351]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -138,5 +159,8 @@ theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 9
 
-[connection signal="gui_input" from="VBox/Search/LineEdit" to="VBox/Search/LineEdit" method="_on_gui_input"]
-[connection signal="gui_input" from="VBox/Scroll/ScrollContainer" to="VBox/Scroll/ScrollContainer" method="_on_gui_input"]
+[node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=576030444]
+
+[connection signal="gui_input" from="Background/VBox/Search/LineEdit" to="Background/VBox/Search/LineEdit" method="_on_gui_input"]
+[connection signal="gui_input" from="Background/VBox/Scroll/ScrollContainer" to="Background/VBox/Scroll/ScrollContainer" method="_on_gui_input"]
+[connection signal="request_completed" from="HTTPRequest" to="." method="_on_request_completed"]
