@@ -5,6 +5,15 @@
 
     "files.watcherExclude": {
         "**/AppliedWebTerminal-main/**": true,
-        "**/Applied-Energistics-2-forge-1.20.1/**": true
+        "**/Applied-Energistics-2-forge-1.20.1/**": true,
+    },
+    
+    "files.exclude": {
+        "**/*.uid": true,
+        ".godot/": true,
+        ".editorconfig": true,
+        "project.godot": true,
+        ".gitignore": true,
+        ".gitattributes": true,
     }
 }

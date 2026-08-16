@@ -30,5 +30,6 @@ grow_horizontal = 0
 grow_vertical = 0
 offset_transform_enabled = true
 offset_transform_position = Vector2(-4, -4)
+theme_override_font_sizes/font_size = 20
 horizontal_alignment = 2
 vertical_alignment = 2

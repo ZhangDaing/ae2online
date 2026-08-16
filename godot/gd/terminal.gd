@@ -22,18 +22,31 @@ enum SortDir{ASC = 0,DESC = 1}
 
 var current_sort_type:SortType = 1 as SortType
 var current_sort_dir:SortDir = 0 as SortDir
+
+# 刷新界面
+var requesting = false
+@onready var reflash_timer = $ReflashTimer
 #---------------------------------------------------
 # ready函数
 func _ready():
 	# 初始化
 	request_data()
+
+# process函数
+func _process(_delta: float) -> void:
+	pass # Replace with function body.
+
 #---------------------------------------------------
 # 核心函数，请求后端数据
 # 请求数据
 func request_data() -> void:
+	if requesting:
+		return
+	requesting = true
 	var url = BACKEND_URL + "/storage"
 	var error = http_request.request(url)
 	if error != OK:
+		requesting = false
 		print("后端请求失败")
 
 # 请求完成，进行回调
@@ -43,6 +56,7 @@ func _on_request_completed(
 	_headers:PackedStringArray, 
 	body:PackedByteArray
 ) -> void:
+	requesting = false
 	# 检查请求结果
 	if result != HTTPRequest.RESULT_SUCCESS:
 		print("网络错误")
@@ -78,7 +92,10 @@ func _clear_cards() -> void:
 	await get_tree().process_frame
 
 func _refresh() -> void:
-	request_data() 
+	request_data()
+
+func _on_reflash_timeout() -> void:
+	_refresh()
 
 #---------------------------------------------------
 # 检索功能
@@ -145,8 +162,11 @@ func _cmp_ignore_case(a:String, b:String) -> int:
 	return 0
 
 #---------------------------------------------------
-# 配置窗口信号回调
+# 配置设置信号回调
 func apply_sort_config(sort_type:int, sort_dir:int) -> void:
 	current_sort_type = sort_type as SortType
 	current_sort_dir = sort_dir as SortDir
 	_refresh()
+
+func apply_reflash_time_config(value: float) -> void:
+	reflash_timer.wait_time = value

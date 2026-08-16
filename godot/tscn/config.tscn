@@ -20,8 +20,8 @@ script = ExtResource("2_jmvus")
 layout_mode = 0
 offset_left = 411.0
 offset_top = -297.0
-offset_right = 515.0
-offset_bottom = -239.0
+offset_right = 528.0
+offset_bottom = -237.0
 theme_type_variation = &"Background"
 
 [node name="Button" type="Button" parent="ConfigButton" unique_id=1522766390]
@@ -67,10 +67,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 32
 
 [node name="Scroll" type="ScrollContainer" parent="ConfigWindow/Margin" unique_id=1249299013]
 layout_mode = 2
@@ -84,15 +84,14 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="Label" type="Label" parent="ConfigWindow/Margin/Scroll/VBox/Config1" unique_id=268793914]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(256, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "排序方式"
 
 [node name="OptionButton" type="OptionButton" parent="ConfigWindow/Margin/Scroll/VBox/Config1" unique_id=745951048]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(256, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
 selected = 0
 item_count = 3
 popup/item_0/text = "名称"
@@ -107,15 +106,14 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="Label" type="Label" parent="ConfigWindow/Margin/Scroll/VBox/Config2" unique_id=818906489]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(256, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "排序方向"
 
 [node name="OptionButton" type="OptionButton" parent="ConfigWindow/Margin/Scroll/VBox/Config2" unique_id=135478871]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(256, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
 selected = 0
 item_count = 2
 popup/item_0/text = "升序"
@@ -128,23 +126,22 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="Label" type="Label" parent="ConfigWindow/Margin/Scroll/VBox/Config3" unique_id=648758998]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(256, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
+text = "刷新时间"
 
-[node name="OptionButton" type="OptionButton" parent="ConfigWindow/Margin/Scroll/VBox/Config3" unique_id=1042653889]
-custom_minimum_size = Vector2(200, 0)
+[node name="SpinBox" type="SpinBox" parent="ConfigWindow/Margin/Scroll/VBox/Config3" unique_id=1657263537]
+custom_minimum_size = Vector2(256, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-selected = 0
-item_count = 3
-popup/item_0/text = "名称"
-popup/item_0/id = 0
-popup/item_1/text = "数量"
-popup/item_1/id = 1
-popup/item_2/text = "模组id"
-popup/item_2/id = 2
+step = 0.01
+page = 2.0
+value = 10.0
+allow_greater = true
+update_on_text_changed = true
+custom_arrow_step = 1.0
 
 [connection signal="pressed" from="ConfigButton/Button" to="." method="_on_button_pressed"]
 [connection signal="item_selected" from="ConfigWindow/Margin/Scroll/VBox/Config1/OptionButton" to="." method="_on_sort_type_selected"]
 [connection signal="item_selected" from="ConfigWindow/Margin/Scroll/VBox/Config2/OptionButton" to="." method="_on_sort_dir_selected"]
+[connection signal="value_changed" from="ConfigWindow/Margin/Scroll/VBox/Config3/SpinBox" to="." method="_on_reflash_time_changed"]
