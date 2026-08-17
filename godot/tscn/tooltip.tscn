@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://btclfmyaj1gvc"]
+
+[ext_resource type="Script" uid="uid://bnf43r1slalsw" path="res://gd/tooltip.gd" id="1_3fsig"]
+[ext_resource type="Material" uid="uid://bkpf3s3xr2jtd" path="res://Shader/Panel.tres" id="2_d4wma"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_7xgj0"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+
+[sub_resource type="Theme" id="Theme_risca"]
+Label/styles/normal = SubResource("StyleBoxEmpty_7xgj0")
+
+[node name="Tooltip" type="Control" unique_id=1485918006]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_3fsig")
+
+[node name="Label" type="Label" parent="." unique_id=1235718141]
+layout_mode = 1
+offset_right = 1.0
+offset_bottom = 30.0
+theme = SubResource("Theme_risca")
+
+[node name="Panel" type="Panel" parent="Label" unique_id=487462692]
+show_behind_parent = true
+material = ExtResource("2_d4wma")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

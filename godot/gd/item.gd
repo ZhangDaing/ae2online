@@ -66,3 +66,15 @@ func _on_cover_loaded(
 	
 	var texture = ImageTexture.create_from_image(image)
 	icon_texture.texture = texture
+
+#---------------------------------------------------
+# 更新tooltip
+signal tooltip_on(id:String)
+signal tooltip_off()
+
+func _on_mouse_entered() -> void:
+	tooltip_on.emit(card_data.get("id",null))
+
+
+func _on_mouse_exited() -> void:
+	tooltip_off.emit()

@@ -99,6 +99,11 @@ func refresh_cards(items:Array) -> void:
 			new_card.set_data(item)
 			card_container.add_child(new_card)
 			card_cache[item_id] = new_card
+
+			# 连接用于tooltip的信号
+			new_card.tooltip_on.connect(_on_card_tooltip_on)
+			new_card.tooltip_off.connect(_on_card_tooltip_off)
+
 	# 移除不需要的卡片
 	for item_id in card_cache.keys():
 		if not keep_cards.has(item_id):
@@ -207,3 +212,13 @@ func apply_sort_config(sort_type:int, sort_dir:int) -> void:
 
 func apply_reflash_time_config(value: float) -> void:
 	reflash_timer.wait_time = value
+
+# 配置tooltip信号回调
+signal tooltip_on(id:String)
+signal tooltip_off()
+
+func _on_card_tooltip_on(id:String) -> void:
+	tooltip_on.emit(id)
+
+func _on_card_tooltip_off() -> void:
+	tooltip_off.emit()
