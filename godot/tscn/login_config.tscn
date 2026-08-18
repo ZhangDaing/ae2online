@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://djd1gi13m111h"]
+
+[ext_resource type="Script" uid="uid://dxylxyvqjpfhl" path="res://gd/login_config.gd" id="1_trgwa"]
+
+[node name="LoginConfig" type="VBoxContainer" unique_id=216476065]
+script = ExtResource("1_trgwa")
+
+[node name="Label" type="Label" parent="." unique_id=304587462]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 40
+text = "账号一"
+
+[node name="UrlInput" type="HBoxContainer" parent="." unique_id=718995421]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="UrlInput" unique_id=1549224367]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "网络地址"
+
+[node name="LineEdit" type="TextEdit" parent="UrlInput" unique_id=1603054628]
+custom_minimum_size = Vector2(384, 0)
+layout_mode = 2
+text = "http://127.0.0.1:11595"
+
+[node name="UsernameInput" type="HBoxContainer" parent="." unique_id=1497166406]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="UsernameInput" unique_id=1408294816]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "用户名"
+
+[node name="LineEdit" type="TextEdit" parent="UsernameInput" unique_id=1232590756]
+custom_minimum_size = Vector2(384, 0)
+layout_mode = 2
+
+[node name="PasswordInput" type="HBoxContainer" parent="." unique_id=1175809149]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="PasswordInput" unique_id=1715125863]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "密码"
+
+[node name="LineEdit" type="TextEdit" parent="PasswordInput" unique_id=289004079]
+custom_minimum_size = Vector2(384, 0)
+layout_mode = 2
+
+[node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=1342480793]
+
+[connection signal="request_completed" from="HTTPRequest" to="." method="_on_login_completed"]

@@ -11,7 +11,9 @@ extends Control
 # 预加载卡片场景
 const CARD_SCENCE = preload("res://tscn/item.tscn")
 # 后端请求地址
-const BACKEND_URL = "http://127.0.0.1:11595"
+var _url = ""
+var _token:Dictionary = {}
+var connected = false
 
 # 检索文本
 var search_text = ""
@@ -46,11 +48,13 @@ func _process(_delta: float) -> void:
 # 核心函数，请求后端数据
 # 请求数据
 func request_data() -> void:
-	if requesting:
+	if requesting or !connected:
 		return
 	requesting = true
-	var url = BACKEND_URL + "/storage"
-	var error = http_request.request(url)
+	var url = _url + "/storage"
+	var error = http_request.request(url,
+		[ "Authorization: Bearer " + _token.get("token", "") ],
+		HTTPClient.METHOD_GET)
 	if error != OK:
 		requesting = false
 		print("后端请求失败")
@@ -222,3 +226,11 @@ func _on_card_tooltip_on(id:String) -> void:
 
 func _on_card_tooltip_off() -> void:
 	tooltip_off.emit()
+
+# 配置登录信号回调
+func on_login_succeeded(url:String, token:Dictionary) -> void:
+	# 登录成功后，刷新数据
+	_url = url
+	_token = token
+	connected = true
+	_refresh()

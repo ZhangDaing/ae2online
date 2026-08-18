@@ -28,4 +28,11 @@ public class TerminalRegistry {
     public static Map<BlockEntity, OnlineTerminalBlockEntity> getAllTerminals() {
         return terminals;
     }
+    // 按用户名获取终端
+    public static OnlineTerminalBlockEntity findByUsername(String username) {
+    return terminals.values().stream()
+        .filter(t -> username != null && username.equals(t.getUsername()))
+        .findFirst()
+        .orElse(null);
+    }
 }

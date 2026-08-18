@@ -6,6 +6,8 @@ import io.javalin.http.HandlerType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zhangdaing.ae2online.UI.TokenRegistry;
+
 import java.util.Map;
 
 public class WebServer {
@@ -56,7 +58,14 @@ public class WebServer {
                 // 配置路由
                 // 返回存储物品列表
                 config.routes.get("/storage", ctx -> {
-                var grid = findGrid();
+                String auth = ctx.header("Authorization");
+                String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
+                var terminal = TokenRegistry.getTerminal(token);
+                if (terminal == null) {
+                    ctx.status(401).json(Map.of("error", "登录过期"));
+                    return;
+                }
+                var grid = terminal.getGrid();
                 if (grid == null){
                     ctx.json(Map.of("error", "no terminal connected to a network"));
                     return;
@@ -90,6 +99,21 @@ public class WebServer {
                     } else {
                         ctx.status(404);
                     }
+                });
+
+                // 登录
+                config.routes.post("/login", ctx -> {
+                    var body = ctx.bodyAsClass(Map.class);
+                    String username = (String) body.get("username");
+                    String password = (String) body.get("password");
+
+                    var terminal = TerminalRegistry.findByUsername(username);
+                    if (terminal == null || !password.equals(terminal.getPassword())) {
+                        ctx.status(401).result("认证失败");
+                        return;
+                    }
+                    String token = TokenRegistry.createToken(terminal);
+                    ctx.json(Map.of("token", token));
                 });
 
             LOGGER.info("Web server started on port 11595");

@@ -2,6 +2,7 @@
 
 [ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_pcurs"]
 [ext_resource type="Script" uid="uid://c4b74ty0bop4i" path="res://gd/config.gd" id="2_jmvus"]
+[ext_resource type="Script" uid="uid://cp7ey7f8hy4" path="res://gd/login_container.gd" id="3_0hx26"]
 
 [node name="Config" type="Control" unique_id=123868002]
 layout_mode = 3
@@ -90,7 +91,7 @@ theme_override_font_sizes/font_size = 40
 text = "排序方式"
 
 [node name="OptionButton" type="OptionButton" parent="ConfigWindow/Margin/Scroll/VBox/Config1" unique_id=745951048]
-custom_minimum_size = Vector2(256, 0)
+custom_minimum_size = Vector2(384, 0)
 layout_mode = 2
 selected = 0
 item_count = 3
@@ -112,7 +113,7 @@ theme_override_font_sizes/font_size = 40
 text = "排序方向"
 
 [node name="OptionButton" type="OptionButton" parent="ConfigWindow/Margin/Scroll/VBox/Config2" unique_id=135478871]
-custom_minimum_size = Vector2(256, 0)
+custom_minimum_size = Vector2(384, 0)
 layout_mode = 2
 selected = 0
 item_count = 2
@@ -132,7 +133,7 @@ theme_override_font_sizes/font_size = 40
 text = "刷新时间"
 
 [node name="SpinBox" type="SpinBox" parent="ConfigWindow/Margin/Scroll/VBox/Config3" unique_id=1657263537]
-custom_minimum_size = Vector2(256, 0)
+custom_minimum_size = Vector2(384, 0)
 layout_mode = 2
 step = 0.01
 page = 2.0
@@ -141,7 +142,34 @@ allow_greater = true
 update_on_text_changed = true
 custom_arrow_step = 1.0
 
+[node name="LoginContainer" type="VBoxContainer" parent="ConfigWindow/Margin/Scroll/VBox" unique_id=1142105914]
+layout_mode = 2
+script = ExtResource("3_0hx26")
+
+[node name="AddLogin" type="HBoxContainer" parent="ConfigWindow/Margin/Scroll/VBox/LoginContainer" unique_id=1257045919]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="ConfigWindow/Margin/Scroll/VBox/LoginContainer/AddLogin" unique_id=1935872126]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "新账号"
+
+[node name="Button" type="Button" parent="ConfigWindow/Margin/Scroll/VBox/LoginContainer/AddLogin" unique_id=741682306]
+layout_mode = 2
+text = "＋"
+
+[node name="Button2" type="Button" parent="ConfigWindow/Margin/Scroll/VBox/LoginContainer/AddLogin" unique_id=991145999]
+layout_mode = 2
+text = "—"
+
+[node name="LoginButton" type="Button" parent="ConfigWindow/Margin/Scroll/VBox/LoginContainer/AddLogin" unique_id=1707906756]
+layout_mode = 2
+text = "更新登录状态"
+
 [connection signal="pressed" from="ConfigButton/Button" to="." method="_on_button_pressed"]
 [connection signal="item_selected" from="ConfigWindow/Margin/Scroll/VBox/Config1/OptionButton" to="." method="_on_sort_type_selected"]
 [connection signal="item_selected" from="ConfigWindow/Margin/Scroll/VBox/Config2/OptionButton" to="." method="_on_sort_dir_selected"]
 [connection signal="value_changed" from="ConfigWindow/Margin/Scroll/VBox/Config3/SpinBox" to="." method="_on_reflash_time_changed"]
+[connection signal="pressed" from="ConfigWindow/Margin/Scroll/VBox/LoginContainer/AddLogin/Button" to="ConfigWindow/Margin/Scroll/VBox/LoginContainer" method="_on_button_pressed"]
+[connection signal="pressed" from="ConfigWindow/Margin/Scroll/VBox/LoginContainer/AddLogin/Button2" to="ConfigWindow/Margin/Scroll/VBox/LoginContainer" method="_on_button_2_pressed"]
+[connection signal="pressed" from="ConfigWindow/Margin/Scroll/VBox/LoginContainer/AddLogin/LoginButton" to="ConfigWindow/Margin/Scroll/VBox/LoginContainer" method="_on_login_button_pressed"]
