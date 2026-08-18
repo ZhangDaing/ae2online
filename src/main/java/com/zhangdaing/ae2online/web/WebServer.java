@@ -133,13 +133,4 @@ public class WebServer {
             LOGGER.info("Web server stopped");
         }
     }
-
-
-    private static appeng.api.networking.IGrid findGrid() {
-        var terminal = TerminalRegistry.getAllTerminals().values().stream()
-        .filter(t -> t.isOnline() && t.getGrid() != null)
-        .findFirst()
-        .orElse(null);
-        return terminal != null ? terminal.getGrid() : null;
-    }
 }

@@ -19,10 +19,10 @@ script = ExtResource("2_jmvus")
 
 [node name="ConfigButton" type="Panel" parent="." unique_id=1483727239]
 layout_mode = 0
-offset_left = 411.0
-offset_top = -297.0
-offset_right = 528.0
-offset_bottom = -237.0
+offset_left = 412.0
+offset_top = -300.0
+offset_right = 540.0
+offset_bottom = -240.0
 theme_type_variation = &"Background"
 
 [node name="Button" type="Button" parent="ConfigButton" unique_id=1522766390]
