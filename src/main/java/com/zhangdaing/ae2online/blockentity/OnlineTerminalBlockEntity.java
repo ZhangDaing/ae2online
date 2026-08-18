@@ -8,6 +8,7 @@ import appeng.api.networking.IGrid;
 import appeng.blockentity.grid.AENetworkBlockEntity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -51,4 +52,37 @@ public class OnlineTerminalBlockEntity extends AENetworkBlockEntity {
         // 上线时注册到 Web 终端列表，离线时注销
         RegisterOnStateChange(isOnline());
     }
+
+
+    // NBT设置
+    private String username = "";
+    private String password = "";
+    private String url = "";
+
+    public void setCredentials(String username, String password, String url) {
+        this.username = username;
+        this.password = password;
+        this.url = url;
+        setChanged();
+    }
+
+    @Override
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putString("username", username);
+        tag.putString("password", password);
+        tag.putString("url", url);
+    }
+
+    @Override
+    public void loadTag(CompoundTag tag) {
+        super.loadTag(tag);
+        username = tag.getString("username");
+        password = tag.getString("password");
+        url = tag.getString("url");
+    }
+
+    public String getUsername() { return username; }
+    public String getPassword() { return password; }
+    public String getUrl() { return url; }
 }

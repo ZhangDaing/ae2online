@@ -3,6 +3,7 @@ package com.zhangdaing.ae2online;
 import com.zhangdaing.ae2online.blockentity.OnlineTerminalBlockEntity;
 import com.zhangdaing.ae2online.web.WebServer;
 import com.zhangdaing.ae2online.block.OnlineTerminalBlock;
+import com.zhangdaing.ae2online.UI.Networking;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -63,6 +64,9 @@ public class ae2online
         // 服务器启动时开 Web 服务器，停止时关
         MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent e) -> WebServer.startsever());
         MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> WebServer.stop());
+
+        // 注册网络消息
+        Networking.register();
     }
 
 
