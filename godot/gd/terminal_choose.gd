@@ -1,8 +1,5 @@
 extends Control
 
-
-signal terminal_choosed(index:int)
-
 @onready var option_button = $Panel/OptionButton
 
 # 刷新终端选项
@@ -17,5 +14,5 @@ func get_selected_terminal() -> int:
 
 # 选项变化时
 func _on_terminal_choosed(index:int) -> void:
-	terminal_choosed.emit(index + 1)
+	EventBus.terminal_choosed.emit(index + 1)
 

@@ -1,7 +1,5 @@
 extends VBoxContainer
 
-signal login_succeeded(url:String, token:Dictionary)
-
 @onready var url_input = $UrlInput/LineEdit
 @onready var username_input = $UsernameInput/LineEdit
 @onready var password_input = $PasswordInput/LineEdit
@@ -41,4 +39,4 @@ func _on_login_completed(
 	if token["token"] == "":
 		print("登录失败：未返回 token")
 		return
-	login_succeeded.emit(_url, token)
+	EventBus.terminal_logged.emit(_url, token)

@@ -69,12 +69,9 @@ func _on_cover_loaded(
 
 #---------------------------------------------------
 # 更新tooltip
-signal tooltip_on(id:String)
-signal tooltip_off()
-
 func _on_mouse_entered() -> void:
-	tooltip_on.emit(card_data.get("id",null))
+	EventBus.tooltip_on.emit(card_data.get("id", null))
 
 
 func _on_mouse_exited() -> void:
-	tooltip_off.emit()
+	EventBus.tooltip_off.emit()

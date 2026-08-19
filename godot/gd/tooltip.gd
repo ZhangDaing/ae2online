@@ -2,9 +2,16 @@ extends Control
 
 @onready var label:Label = $Label
 
+#---------------------------------------------------
+# ready函数
+func _ready() -> void:
+	EventBus.tooltip_on.connect(on)
+	EventBus.tooltip_off.connect(off)
+	
+# process函数
 func _process(_delta: float) -> void:
 	follow_mouse()
-
+#---------------------------------------------------
 func set_data(id:String) -> void:
 	label.text = id
 
