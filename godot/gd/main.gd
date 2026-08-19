@@ -12,13 +12,13 @@ func _ready() -> void:
 	EventBus.terminal_choosed.connect(_on_terminal_choosed)
 
 func _on_terminal_logged(url:String, token:Dictionary) -> void:
-	var count = token.get("count", terminals.size() + 1)
-	terminals[count] = {"url": url, "token": token}
+	var index = int(token.get("count", terminals.size() + 1)) - 1
+	terminals[index] = {"url": url, "token": token}
 	terminal_choose.refresh_terminal_options(terminals.size())
-	terminal.on_login_succeeded(url,token) 
+	EventBus.terminal_choosed.emit(terminal_choose.get_selected_terminal())
 
 func _on_terminal_choosed(index:int) -> void:
-	if index < 0 or index > terminals.size():
+	if index < 0 or index >= terminals.size():
 		return
 	var t = terminals[index]
 	terminal.on_login_succeeded(t["url"], t["token"])

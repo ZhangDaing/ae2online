@@ -50,10 +50,14 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "密码"
 
-[node name="LineEdit" type="TextEdit" parent="PasswordInput" unique_id=289004079]
+[node name="LineEdit" type="LineEdit" parent="PasswordInput" unique_id=1550440738]
 custom_minimum_size = Vector2(384, 0)
 layout_mode = 2
+secret = true
 
 [node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=1342480793]
 
+[connection signal="text_changed" from="UrlInput/LineEdit" to="." method="_on_url_changed"]
+[connection signal="text_changed" from="UsernameInput/LineEdit" to="." method="_on_username_changed"]
+[connection signal="text_changed" from="PasswordInput/LineEdit" to="." method="_on_password_changed"]
 [connection signal="request_completed" from="HTTPRequest" to="." method="_on_login_completed"]

@@ -14,5 +14,5 @@ func get_selected_terminal() -> int:
 
 # 选项变化时
 func _on_terminal_choosed(index:int) -> void:
-	EventBus.terminal_choosed.emit(index + 1)
+	EventBus.terminal_choosed.emit(index)
 
