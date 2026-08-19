@@ -1,4 +1,4 @@
-@warning_ignore("UNUSED_SIGNAL")
+@warning_ignore_start("unused_signal")
 extends Node
 
 # 设置信号
