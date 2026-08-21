@@ -8,20 +8,30 @@ extends Control
 
 var terminals:Dictionary = {}
 
+var max_id:int = 0
+
 func _ready() -> void:
 	# 终端信号连接
 	EventBus.terminal_logged.connect(_on_terminal_logged)
 	EventBus.terminal_choosed.connect(_on_terminal_choosed)
+	EventBus.account_config_changed.connect(_on_account_config_changed)
 
 func _on_terminal_logged(url:String, token:Dictionary) -> void:
-	var index = int(token.get("count", terminals.size() + 1)) - 1
-	terminals[index] = {"url": url, "token": token}
-	terminal_choose.refresh_terminal_options(terminals.size())
+	var id = int(token.get("id", 1))
+	max_id = max(max_id, id)
+	terminals[id] = {"url": url, "token": token}
+	terminal_choose.refresh_terminal_options(max_id)
 	EventBus.terminal_choosed.emit(terminal_choose.get_selected_terminal())
 
 func _on_terminal_choosed(index:int) -> void:
-	if index < 0 or index >= terminals.size():
+	var id = index + 1
+	if not terminals.has(id):
 		return
-	var t = terminals[index]
+	var t = terminals[id]
 	terminal.on_login_succeeded(t["url"], t["token"])
 	terminal_cpus.on_login_succeeded(t["url"], t["token"])
+
+func _on_account_config_changed() -> void:
+	# 清空终端数据
+	terminals.clear()
+	max_id = 0

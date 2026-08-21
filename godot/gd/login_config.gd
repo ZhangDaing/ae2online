@@ -7,7 +7,7 @@ extends VBoxContainer
 
 var _url:String = ""
 var _username:String = ""
-var count = 0
+var id:int = 1
 
 # 防止在读取数据时发送更新信号
 var _loading: bool = false
@@ -55,7 +55,7 @@ func _on_login_completed(
 		print("登录失败，状态码: ", response_code)
 		return
 	var data = JSON.parse_string(body.get_string_from_utf8())
-	var token = {"token": data.get("token", ""),"count": count}
+	var token = {"token": data.get("token", ""),"id": id}
 	if token["token"] == "":
 		print("登录失败：未返回 token")
 		return
