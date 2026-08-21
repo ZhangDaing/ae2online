@@ -1,0 +1,106 @@
+[gd_scene format=3 uid="uid://45s5sawws5b"]
+
+[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_wjnf3"]
+[ext_resource type="Script" uid="uid://c20bvayfi4n21" path="res://gd/mode_choose.gd" id="2_7lchm"]
+
+[node name="ModeChoose" type="Control" unique_id=830883217]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_wjnf3")
+script = ExtResource("2_7lchm")
+
+[node name="HBoxContainer" type="VBoxContainer" parent="." unique_id=1598065173]
+layout_mode = 0
+offset_left = -540.0
+offset_top = -300.0
+offset_right = -412.0
+offset_bottom = -178.0
+theme_override_constants/separation = 40
+
+[node name="Button1" type="Panel" parent="HBoxContainer" unique_id=492787862]
+custom_minimum_size = Vector2(128, 60)
+layout_mode = 2
+theme_type_variation = &"Background"
+
+[node name="Button" type="Button" parent="HBoxContainer/Button1" unique_id=1453043341]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Label" type="Label" parent="HBoxContainer/Button1" unique_id=796204311]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -9.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Terminal"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button2" type="Panel" parent="HBoxContainer" unique_id=326546044]
+custom_minimum_size = Vector2(128, 60)
+layout_mode = 2
+theme_type_variation = &"Background"
+
+[node name="Button" type="Button" parent="HBoxContainer/Button2" unique_id=1962714541]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Label" type="Label" parent="HBoxContainer/Button2" unique_id=44495226]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -9.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "CPU"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button3" type="Panel" parent="HBoxContainer" unique_id=329560563]
+custom_minimum_size = Vector2(128, 60)
+layout_mode = 2
+theme_type_variation = &"Background"
+
+[node name="Button" type="Button" parent="HBoxContainer/Button3" unique_id=670223218]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Label" type="Label" parent="HBoxContainer/Button3" unique_id=250240164]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -9.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Craft"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="HBoxContainer/Button1/Button" to="." method="_on_button1_pressed"]
+[connection signal="pressed" from="HBoxContainer/Button2/Button" to="." method="_on_button2_pressed"]
+[connection signal="pressed" from="HBoxContainer/Button3/Button" to="." method="_on_button3_pressed"]

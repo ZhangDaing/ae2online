@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://d0wunqvwt5tbx"]
+
+[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_mk6sj"]
+[ext_resource type="Script" uid="uid://cxyfonw3eaox0" path="res://gd/terminal_cpus.gd" id="2_vmen2"]
+
+[node name="TerminalCPUs" type="Control" unique_id=1031145949]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_mk6sj")
+script = ExtResource("2_vmen2")
+
+[node name="Background" type="Panel" parent="." unique_id=2043165766]
+custom_minimum_size = Vector2(696, 611)
+custom_maximum_size = Vector2(696, 611)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -348.0
+offset_top = -305.5
+offset_right = 348.0
+offset_bottom = 305.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"Background"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Background" unique_id=1400392453]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CPUContainer" type="VBoxContainer" parent="Background/ScrollContainer" unique_id=29597464]
+layout_mode = 2
+
+[node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=561700597]
+
+[node name="ReflashTimer" type="Timer" parent="." unique_id=249831600]
+autostart = true
+
+[connection signal="request_completed" from="HTTPRequest" to="." method="_on_request_completed"]
+[connection signal="timeout" from="ReflashTimer" to="." method="_on_reflash_timeout"]

@@ -120,11 +120,8 @@ func refresh_cards(items:Array) -> void:
 	
 	_apply_search_filter() # 应用检索过滤
 
-func _refresh() -> void:
-	request_data()
-
 func _on_reflash_timeout() -> void:
-	_refresh()
+	request_data()
 
 #---------------------------------------------------
 # 检索功能
@@ -222,4 +219,4 @@ func on_login_succeeded(url:String, token:Dictionary) -> void:
 	_url = url
 	_token = token
 	connected = true
-	_refresh()
+	request_data()

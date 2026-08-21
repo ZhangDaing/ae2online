@@ -1,0 +1,161 @@
+[gd_scene format=3 uid="uid://o5a3xleb0wt8"]
+
+[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_8casj"]
+[ext_resource type="Script" uid="uid://t4gcifhst1dl" path="res://gd/terminal_craft.gd" id="2_js6gq"]
+[ext_resource type="Script" uid="uid://bid4j17vxylf1" path="res://gd/line_edit.gd" id="2_vsqdq"]
+[ext_resource type="Script" uid="uid://bktawfmgkn8w8" path="res://gd/scroll_container.gd" id="3_js6gq"]
+
+[node name="TerminalCraft" type="Control" unique_id=1724061113]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_8casj")
+script = ExtResource("2_js6gq")
+
+[node name="Background" type="Panel" parent="." unique_id=1607258711]
+custom_minimum_size = Vector2(696, 611)
+custom_maximum_size = Vector2(696, 611)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -348.0
+offset_top = -305.5
+offset_right = 348.0
+offset_bottom = 305.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_8casj")
+theme_type_variation = &"Background"
+
+[node name="VBox" type="VBoxContainer" parent="Background" unique_id=1441232633]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -332.0
+offset_top = -289.5
+offset_right = 332.0
+offset_bottom = 297.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Search" type="Control" parent="Background/VBox" unique_id=845710080]
+custom_minimum_size = Vector2(364, 40)
+layout_mode = 2
+
+[node name="SearchPanel" type="Panel" parent="Background/VBox/Search" unique_id=695707333]
+custom_minimum_size = Vector2(364, 40)
+custom_maximum_size = Vector2(364, 40)
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -364.0
+offset_top = -20.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+size_flags_horizontal = 4
+theme_type_variation = &"BackgroundPanel"
+
+[node name="LineEdit" type="LineEdit" parent="Background/VBox/Search" unique_id=1784241464]
+custom_minimum_size = Vector2(356, 32)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 0.094000004
+anchor_right = 1.0
+anchor_bottom = 13.628
+offset_left = -360.0
+offset_top = -0.010000229
+offset_right = -4.0
+offset_bottom = -508.87
+grow_horizontal = 0
+grow_vertical = 2
+offset_transform_position = Vector2(128, 0)
+context_menu_enabled = false
+emoji_menu_enabled = false
+flat = true
+script = ExtResource("2_vsqdq")
+
+[node name="Scroll" type="Control" parent="Background/VBox" unique_id=1047074154]
+custom_minimum_size = Vector2(664, 516)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="ScrollPanel" type="Panel" parent="Background/VBox/Scroll" unique_id=799923015]
+custom_minimum_size = Vector2(664, 516)
+custom_maximum_size = Vector2(664, 516)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -332.0
+offset_top = -250.0
+offset_right = 332.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+theme_type_variation = &"BackgroundPanel"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Background/VBox/Scroll" unique_id=953558553]
+custom_minimum_size = Vector2(656, 508)
+custom_maximum_size = Vector2(656, -1)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.006
+anchor_top = 0.008
+anchor_right = 0.994
+anchor_bottom = 0.99200004
+offset_left = 0.016000032
+offset_top = 7.8719997
+offset_right = -0.015991211
+offset_bottom = -7.8720093
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.0
+theme_type_variation = &"Scroll"
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+script = ExtResource("3_js6gq")
+
+[node name="Margin" type="MarginContainer" parent="Background/VBox/Scroll/ScrollContainer" unique_id=1708026553]
+layout_mode = 2
+theme_override_constants/margin_bottom = 12
+
+[node name="ItemContainer" type="GridContainer" parent="Background/VBox/Scroll/ScrollContainer/Margin" unique_id=1420090249]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+offset_transform_enabled = true
+offset_transform_position = Vector2(8, 8)
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 9
+
+[node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=1586625332]
+
+[node name="ReflashTimer" type="Timer" parent="." unique_id=601755379]
+autostart = true
+
+[connection signal="gui_input" from="Background/VBox/Search/LineEdit" to="Background/VBox/Search/LineEdit" method="_on_gui_input"]
+[connection signal="gui_input" from="Background/VBox/Scroll/ScrollContainer" to="Background/VBox/Scroll/ScrollContainer" method="_on_gui_input"]

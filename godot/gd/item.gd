@@ -18,13 +18,13 @@ func _ready() -> void:
 func set_data(data: Dictionary) -> void:
 	card_data = data
 	if is_node_ready():
-		count_label.text = "%d" % card_data.get("count", 0)
+		count_label.text = _format_number(card_data.get("count", 0))
 		load_cover()
 
 func update_data(data: Dictionary) -> void:
 	card_data = data
 	if is_node_ready():
-		count_label.text = "%d" % card_data.get("count", 0)
+		count_label.text = _format_number(card_data.get("count", 0))
 
 # 加载图标
 func load_cover() -> void:
@@ -75,3 +75,19 @@ func _on_mouse_entered() -> void:
 
 func _on_mouse_exited() -> void:
 	EventBus.tooltip_off.emit()
+
+#---------------------------------------------------
+# 格式化数字
+func _format_number(num: int) -> String:
+	if num >= 1000000000:
+		return "%0.1fG" % (num / (1000000000.0))
+	if num >= 1000000:
+		return "%0.1fM" % (num / (1000000.0))
+	if num >= 1000:
+		return "%0.1fK" % (num / (1000.0))
+	return "%d" % num
+
+
+
+
+		

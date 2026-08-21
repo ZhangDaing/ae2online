@@ -3,6 +3,8 @@ extends Control
 #---------------------------------------------------
 @onready var terminal = $Terminal
 @onready var terminal_choose = $TerminalChoose
+@onready var terminal_cpus = $TerminalCPUs
+@onready var terminal_craft = $TerminalCraft
 
 var terminals:Dictionary = {}
 
@@ -22,3 +24,4 @@ func _on_terminal_choosed(index:int) -> void:
 		return
 	var t = terminals[index]
 	terminal.on_login_succeeded(t["url"], t["token"])
+	terminal_cpus.on_login_succeeded(t["url"], t["token"])

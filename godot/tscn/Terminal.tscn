@@ -39,7 +39,6 @@ offset_right = 348.0
 offset_bottom = 305.5
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_pfb6l")
 theme_type_variation = &"Background"
 
 [node name="VBox" type="VBoxContainer" parent="Background" unique_id=1058886471]
