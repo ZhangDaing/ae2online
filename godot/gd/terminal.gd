@@ -42,11 +42,6 @@ func _ready():
 	EventBus.reflash_time_config_changed.connect(apply_reflash_time_config)
 	# 初始化
 	request_data()
-
-# process函数
-func _process(_delta: float) -> void:
-	pass # Replace with function body.
-
 #---------------------------------------------------
 # 核心函数，请求后端数据
 # 请求数据
@@ -86,6 +81,7 @@ func _on_request_completed(
 		return
 	
 	item_cache = data.get("items", []) # 缓存所有物品数据
+	EventBus.terminal_storage_updated.emit(item_cache) # 外传物品数据
 	refresh_cards(sort_items(item_cache)) # 创建卡片
 #---------------------------------------------------
 # 应用返回的数据
@@ -220,3 +216,5 @@ func on_login_succeeded(url:String, token:Dictionary) -> void:
 	_token = token
 	connected = true
 	request_data()
+
+#---------------------------------------------------

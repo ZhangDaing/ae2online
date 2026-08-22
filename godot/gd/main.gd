@@ -30,6 +30,7 @@ func _on_terminal_choosed(index:int) -> void:
 	var t = terminals[id]
 	terminal.on_login_succeeded(t["url"], t["token"])
 	terminal_cpus.on_login_succeeded(t["url"], t["token"])
+	terminal_craft.on_login_succeeded(t["url"], t["token"]) 
 
 func _on_account_config_changed() -> void:
 	# 清空终端数据

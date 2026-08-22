@@ -18,13 +18,21 @@ func _ready() -> void:
 func set_data(data: Dictionary) -> void:
 	card_data = data
 	if is_node_ready():
-		count_label.text = _format_number(card_data.get("count", 0))
+		var count = card_data.get("count", 0)
+		if count != 0:
+			count_label.text = _format_number(count)
+		else:
+			count_label.text = ""
 		load_cover()
 
 func update_data(data: Dictionary) -> void:
 	card_data = data
 	if is_node_ready():
-		count_label.text = _format_number(card_data.get("count", 0))
+		var count = card_data.get("count", 0)
+		if count != 0:
+			count_label.text = _format_number(count)
+		else:
+			count_label.text = ""
 
 # 加载图标
 func load_cover() -> void:

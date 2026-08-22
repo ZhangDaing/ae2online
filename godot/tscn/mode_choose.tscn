@@ -45,7 +45,7 @@ anchor_bottom = 1.0
 offset_bottom = -9.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "Terminal"
+text = "终端"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -97,7 +97,7 @@ anchor_bottom = 1.0
 offset_bottom = -9.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "Craft"
+text = "合成"
 horizontal_alignment = 1
 vertical_alignment = 1
 

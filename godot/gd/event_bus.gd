@@ -13,3 +13,4 @@ signal tooltip_off()
 # 终端信号
 signal terminal_logged(url: String, token: Dictionary)
 signal terminal_choosed(index: int)
+signal terminal_storage_updated(items: Array)
