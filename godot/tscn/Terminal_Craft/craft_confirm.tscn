@@ -1,0 +1,209 @@
+[gd_scene format=3 uid="uid://qg8fy421pj4u"]
+
+[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_k8dkr"]
+[ext_resource type="Script" uid="uid://b5qjm4dwpimxx" path="res://gd/Terminal_Craft/craft_confirm.gd" id="2_tbub3"]
+
+[node name="CraftConfirm" type="Control" unique_id=1579353092]
+layout_mode = 3
+anchor_right = 0.61200005
+anchor_bottom = 0.80300003
+offset_right = 0.6399536
+offset_bottom = -0.16003418
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_k8dkr")
+script = ExtResource("2_tbub3")
+
+[node name="Background" type="Panel" parent="." unique_id=514691049]
+custom_minimum_size = Vector2(784, 578)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"Background"
+
+[node name="What" type="Label" parent="." unique_id=1669492490]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 12.0
+offset_right = -565.0
+offset_bottom = -536.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "正在合成 石头"
+
+[node name="Byte" type="Label" parent="." unique_id=698121745]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 376.0
+offset_top = 12.0
+offset_right = -32.0
+offset_bottom = -536.0
+text = "128KB"
+horizontal_alignment = 2
+
+[node name="ScrollPanel" type="Panel" parent="." unique_id=1897562214]
+custom_minimum_size = Vector2(0, 400)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 46.0
+offset_right = -16.0
+offset_bottom = -104.0
+theme_type_variation = &"BackgroundPanel"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="ScrollPanel" unique_id=142184186]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BoxContainer" type="GridContainer" parent="ScrollPanel/ScrollContainer" unique_id=2045685214]
+layout_mode = 2
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 4
+columns = 3
+
+[node name="Craft" type="Control" parent="." unique_id=1194068800]
+custom_minimum_size = Vector2(128, 48)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 633.0
+offset_top = 494.0
+offset_right = -23.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="Panel" parent="Craft" unique_id=260445653]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"BackgroundPanel"
+
+[node name="Craft" type="Button" parent="Craft" unique_id=2025823866]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"FlatButton"
+text = "合成"
+
+[node name="Plan" type="Control" parent="." unique_id=2114992732]
+custom_minimum_size = Vector2(128, 40)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 472.0
+offset_top = 494.0
+offset_right = -184.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="Panel" parent="Plan" unique_id=521200567]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"BackgroundPanel"
+
+[node name="PlanButton" type="Button" parent="Plan" unique_id=197065860]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"FlatButton"
+text = "计算"
+
+[node name="CPUs" type="Control" parent="." unique_id=1338027584]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 247.0
+offset_top = 494.0
+offset_right = -345.0
+offset_bottom = -36.0
+
+[node name="Panel" type="Panel" parent="CPUs" unique_id=274803376]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"BackgroundPanel"
+
+[node name="OptionButton" type="OptionButton" parent="CPUs" unique_id=252792607]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Count" type="Control" parent="." unique_id=1063771976]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 22.0
+offset_top = 494.0
+offset_right = -570.0
+offset_bottom = -36.0
+
+[node name="Panel" type="Panel" parent="Count" unique_id=1913093555]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"BackgroundPanel"
+
+[node name="SpinBox" type="SpinBox" parent="Count" unique_id=1625693535]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HTTPPlan" type="HTTPRequest" parent="." unique_id=344066586]
+
+[node name="HTTPCraft" type="HTTPRequest" parent="." unique_id=260072159]
+
+[connection signal="request_completed" from="HTTPPlan" to="." method="_on_plan_completed"]
+[connection signal="request_completed" from="HTTPCraft" to="." method="_on_craft_completed"]

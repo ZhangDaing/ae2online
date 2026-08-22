@@ -1,6 +1,6 @@
 extends VBoxContainer
 
-@onready var LoginCongig = load("res://tscn/login_config.tscn")
+@onready var LoginCongig = load("res://tscn/Config/login_config.tscn")
 var next_id:int = 1
 
 #---------------------------------------------------

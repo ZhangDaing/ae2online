@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://dq24uemkvadvy"]
 
 [ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_pcurs"]
-[ext_resource type="Script" uid="uid://c4b74ty0bop4i" path="res://gd/config.gd" id="2_jmvus"]
-[ext_resource type="Script" uid="uid://cp7ey7f8hy4" path="res://gd/login_container.gd" id="3_0hx26"]
+[ext_resource type="Script" uid="uid://c4b74ty0bop4i" path="res://gd/Config/config.gd" id="2_jmvus"]
+[ext_resource type="Script" uid="uid://cp7ey7f8hy4" path="res://gd/Config/login_container.gd" id="3_0hx26"]
 
 [node name="Config" type="Control" unique_id=123868002]
 layout_mode = 3
@@ -47,7 +47,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ConfigWindow" type="Panel" parent="." unique_id=428673680]
-visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

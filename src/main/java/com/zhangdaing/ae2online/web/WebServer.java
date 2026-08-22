@@ -13,14 +13,18 @@ import com.zhangdaing.ae2online.UI.TokenRegistry;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.CalculationStrategy;
+import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.networking.crafting.ICraftingSimulationRequester;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.KeyCounter;
 import appeng.me.helpers.MachineSource;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 public class WebServer {
     private static final Logger LOGGER = LoggerFactory.getLogger("AE2Online Web");
@@ -192,6 +196,72 @@ public class WebServer {
                     ctx.json(Map.of("cpus", cpus));
                 });
 
+                // 计算合成方案
+                config.routes.post("/craft/plan", ctx -> {
+                    String auth = ctx.header("Authorization");
+                    String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
+                    var terminal = TokenRegistry.getTerminal(token);
+                    if (terminal == null) {
+                        ctx.status(401).json(Map.of("error", "登录过期"));
+                        return;
+                    }
+                    var grid = terminal.getGrid();
+                    if (grid == null) {
+                        ctx.json(Map.of("error", "no terminal connected to a network"));
+                        return;
+                    }
+                    var body = ctx.bodyAsClass(Map.class);
+                    String rawId = (String) body.get("rawId");
+                    long amount = ((Number) body.get("count")).longValue();
+                    if (rawId == null || amount <= 0) {
+                        ctx.status(400).json(Map.of("error", "参数错误"));
+                        return;
+                    }
+                    var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(rawId));
+                    if (item == null) {
+                        ctx.status(400).json(Map.of("error", "无效的物品ID"));
+                        return;
+                    }
+                    var what = AEItemKey.of(item);
+                    var crafting = grid.getCraftingService();
+                    IActionHost host = new IActionHost() {
+                        @Override
+                        public IGridNode getActionableNode() {
+                            return grid.getPivot();
+                        }
+                    };
+                    var src = new MachineSource(host);
+                    ICraftingSimulationRequester simRequester = () -> src;
+
+                    ICraftingPlan plan;
+                    try {
+                        plan = crafting.beginCraftingCalculation(
+                                grid.getPivot().getLevel(),
+                                simRequester,
+                                what,
+                                amount,
+                                CalculationStrategy.REPORT_MISSING_ITEMS
+                        ).get();
+                    } catch (InterruptedException e) {
+                        ctx.status(499).json(Map.of("error", "计算已被取消"));
+                        return;
+                    } catch (Exception e) {
+                        ctx.status(500).json(Map.of("error", "合成计算异常: " + e.getMessage()));
+                        return;
+                    }
+
+                    var out = plan.finalOutput().what();
+                    var resp = new HashMap<String, Object>();
+                    resp.put("id", out.getDisplayName().getString());
+                    resp.put("count", plan.finalOutput().amount());
+                    resp.put("bytes", plan.bytes());                            // 所需字节
+                    resp.put("simulation", plan.simulation());                  // 是否缺料
+                    resp.put("used", keyCounterToList(plan.usedItems()));       // 从存储取出的耗材
+                    resp.put("emitted", keyCounterToList(plan.emittedItems())); // 需合成的中间产物
+                    resp.put("missing", keyCounterToList(plan.missingItems())); // 缺的材料
+                    ctx.json(resp);
+                });
+
                 // 提交合成指令
                 config.routes.post("/craft", ctx -> {
                     String auth = ctx.header("Authorization");
@@ -202,11 +272,11 @@ public class WebServer {
                         return;
                     }
                     var grid = terminal.getGrid();
-                    if (grid == null){
+                    if (grid == null) {
                         ctx.json(Map.of("error", "no terminal connected to a network"));
                         return;
                     }
-                    
+
                     var body = ctx.bodyAsClass(Map.class);
                     String rawId = (String) body.get("rawId");
                     long amount = ((Number) body.get("count")).longValue();
@@ -230,51 +300,41 @@ public class WebServer {
                     };
                     var src = new MachineSource(host);
                     ICraftingSimulationRequester simRequester = () -> src;
-                    
-                    // 计算合成方案
-                    long startTime = System.currentTimeMillis();
 
+                    // 计算合成计划
                     ICraftingPlan plan;
-                    try{
+                    try {
                         plan = crafting.beginCraftingCalculation(
-                            grid.getPivot().getLevel(),
-                            simRequester,
-                            what,
-                            amount,
-                            CalculationStrategy.REPORT_MISSING_ITEMS
+                                grid.getPivot().getLevel(),
+                                simRequester,
+                                what,
+                                amount,
+                                CalculationStrategy.REPORT_MISSING_ITEMS
                         ).get();
-                    }
-                    catch (InterruptedException e) {
+                    } catch (InterruptedException e) {
                         ctx.status(499).json(Map.of("error", "计算已被取消"));
                         return;
                     } catch (Exception e) {
                         ctx.status(500).json(Map.of("error", "合成计算异常: " + e.getMessage()));
                         return;
                     }
-                    
-                    long calculationTime = System.currentTimeMillis() - startTime;
 
-                    // 模拟结果表明缺材料
-                    if (plan.simulation()) {
-                        ctx.status(400).json(Map.of(
-                            "error", "缺少材料",
-                            "calculationTime", calculationTime,
-                            "missing", plan.missingItems().keySet().stream()
-                                .map(k -> k.getDisplayName().getString()).toList()));
-                        return;
+                    // 指定 CPU（可选，默认自动分配；-1 或不传 = 自动分配）
+                    ICraftingCPU target = null;
+                    if (body.get("cpu") instanceof Number n) {
+                        int cpuIndex = n.intValue();
+                        var cpuList = List.copyOf(crafting.getCpus());
+                        if (cpuIndex >= 0 && cpuIndex < cpuList.size()) {
+                            target = cpuList.get(cpuIndex);
+                        }
                     }
-                    
-                    // 正式提交到合成CPU执行
-                    var result = crafting.submitJob(plan, null, null, true, src);
+
+                    // 正式提交（缺料检查已交给前端 /craft/plan 控制）
+                    var result = crafting.submitJob(plan, null, target, target == null, src);
                     if (result.successful()) {
-                        ctx.json(Map.of(
-                            "success", true,
-                            "calculationTime", calculationTime));
-                    }
-                    else {
-                        ctx.status(400).json(Map.of(
-                            "error", String.valueOf(result.errorCode()),
-                            "calculationTime", calculationTime));
+                        ctx.json(Map.of("success", true));
+                    } else {
+                        ctx.status(400).json(Map.of("error", String.valueOf(result.errorCode())));
                     }
                 });
 
@@ -287,6 +347,22 @@ public class WebServer {
         }
     }
 
+    // 把 KeyCounter 转成前端耗材列表
+    private static List<Map<String, Object>> keyCounterToList(KeyCounter kc) {
+        var list = new ArrayList<Map<String, Object>>();
+        for (var e : kc) {
+            var key = e.getKey();
+            var id = key.getId();
+            var m = new HashMap<String, Object>();
+            m.put("id", key.getDisplayName().getString());
+            m.put("count", e.getLongValue());
+            m.put("rawId", id.toString());
+            m.put("icon", "/icon/" + id.getNamespace() + "/" + id.getPath());
+            list.add(m);
+        }
+        return list;
+    }
+    
     // 停止Web服务器
     public static void stop() {
         if (app != null) {

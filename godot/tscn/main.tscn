@@ -2,13 +2,13 @@
 
 [ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_a7rub"]
 [ext_resource type="Script" uid="uid://6068q0ki2m0o" path="res://gd/main.gd" id="1_xnj7t"]
-[ext_resource type="PackedScene" uid="uid://dijq77w82dvuc" path="res://tscn/Terminal.tscn" id="2_qtm2r"]
+[ext_resource type="PackedScene" uid="uid://dijq77w82dvuc" path="res://tscn/Terminal/Terminal.tscn" id="2_qtm2r"]
 [ext_resource type="PackedScene" uid="uid://45s5sawws5b" path="res://tscn/mode_choose.tscn" id="4_ap273"]
-[ext_resource type="PackedScene" uid="uid://dq24uemkvadvy" path="res://tscn/config.tscn" id="4_g6ans"]
+[ext_resource type="PackedScene" uid="uid://dq24uemkvadvy" path="res://tscn/Config/config.tscn" id="4_g6ans"]
 [ext_resource type="PackedScene" uid="uid://btclfmyaj1gvc" path="res://tscn/tooltip.tscn" id="5_g6ans"]
-[ext_resource type="PackedScene" uid="uid://d0wunqvwt5tbx" path="res://tscn/terminal_cpus.tscn" id="6_8d387"]
+[ext_resource type="PackedScene" uid="uid://d0wunqvwt5tbx" path="res://tscn/Terminal_CPUs/terminal_cpus.tscn" id="6_8d387"]
 [ext_resource type="PackedScene" uid="uid://bkhdon3bagbhc" path="res://tscn/terminal_choose.tscn" id="6_8kplt"]
-[ext_resource type="PackedScene" uid="uid://o5a3xleb0wt8" path="res://tscn/terminal_craft.tscn" id="7_mn4ff"]
+[ext_resource type="PackedScene" uid="uid://o5a3xleb0wt8" path="res://tscn/Terminal_Craft/terminal_craft.tscn" id="7_mn4ff"]
 
 [node name="Main" type="Control" unique_id=97592994]
 layout_mode = 3

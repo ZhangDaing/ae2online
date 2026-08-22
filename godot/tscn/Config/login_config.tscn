@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://djd1gi13m111h"]
 
-[ext_resource type="Script" uid="uid://dxylxyvqjpfhl" path="res://gd/login_config.gd" id="1_trgwa"]
+[ext_resource type="Script" uid="uid://dxylxyvqjpfhl" path="res://gd/Config/login_config.gd" id="1_trgwa"]
 
 [node name="LoginConfig" type="VBoxContainer" unique_id=216476065]
 script = ExtResource("1_trgwa")

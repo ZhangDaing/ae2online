@@ -14,3 +14,7 @@ signal tooltip_off()
 signal terminal_logged(url: String, token: Dictionary)
 signal terminal_choosed(index: int)
 signal terminal_storage_updated(items: Array)
+signal terminal_cpus_updated(cpus: Array)
+
+# 合成请求信号
+signal item_clicked(card_data: Dictionary)

@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://o5a3xleb0wt8"]
 
 [ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_8casj"]
-[ext_resource type="Script" uid="uid://t4gcifhst1dl" path="res://gd/terminal_craft.gd" id="2_js6gq"]
-[ext_resource type="Script" uid="uid://bid4j17vxylf1" path="res://gd/line_edit.gd" id="2_vsqdq"]
-[ext_resource type="Script" uid="uid://bktawfmgkn8w8" path="res://gd/scroll_container.gd" id="3_js6gq"]
+[ext_resource type="Script" uid="uid://t4gcifhst1dl" path="res://gd/Terminal_Craft/terminal_craft.gd" id="2_js6gq"]
+[ext_resource type="Script" uid="uid://bid4j17vxylf1" path="res://gd/Terminal/line_edit.gd" id="2_vsqdq"]
+[ext_resource type="Script" uid="uid://bktawfmgkn8w8" path="res://gd/Terminal/scroll_container.gd" id="3_js6gq"]
+[ext_resource type="PackedScene" uid="uid://qg8fy421pj4u" path="res://tscn/Terminal_Craft/craft_confirm.tscn" id="5_js6gq"]
 
 [node name="TerminalCraft" type="Control" unique_id=1724061113]
 layout_mode = 3
@@ -156,6 +157,19 @@ columns = 9
 
 [node name="ReflashTimer" type="Timer" parent="." unique_id=601755379]
 autostart = true
+
+[node name="CraftConfirm" parent="." unique_id=1579353092 instance=ExtResource("5_js6gq")]
+custom_minimum_size = Vector2(784, 578)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -150.0
+offset_right = 150.0
+offset_bottom = 150.0
 
 [connection signal="gui_input" from="Background/VBox/Search/LineEdit" to="Background/VBox/Search/LineEdit" method="_on_gui_input"]
 [connection signal="text_changed" from="Background/VBox/Search/LineEdit" to="." method="_on_search_changed"]

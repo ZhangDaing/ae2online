@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d0wunqvwt5tbx"]
 
 [ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_mk6sj"]
-[ext_resource type="Script" uid="uid://cxyfonw3eaox0" path="res://gd/terminal_cpus.gd" id="2_vmen2"]
+[ext_resource type="Script" uid="uid://cxyfonw3eaox0" path="res://gd/Terminal_CPUs/terminal_cpus.gd" id="2_vmen2"]
 
 [node name="TerminalCPUs" type="Control" unique_id=1031145949]
 layout_mode = 3

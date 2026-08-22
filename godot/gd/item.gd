@@ -83,7 +83,14 @@ func _on_mouse_entered() -> void:
 
 func _on_mouse_exited() -> void:
 	EventBus.tooltip_off.emit()
-
+#---------------------------------------------------
+# 处理点击
+func _on_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton \
+	and event.pressed \
+	and event.button_index == MOUSE_BUTTON_LEFT:
+		# 处理左键点击事件
+		EventBus.item_clicked.emit(card_data)
 #---------------------------------------------------
 # 格式化数字
 func _format_number(num: int) -> String:
@@ -94,8 +101,3 @@ func _format_number(num: int) -> String:
 	if num >= 1000:
 		return "%0.1fK" % (num / (1000.0))
 	return "%d" % num
-
-
-
-
-		

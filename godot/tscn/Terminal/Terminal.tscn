@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://dijq77w82dvuc"]
 
 [ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_pfb6l"]
-[ext_resource type="Script" uid="uid://bid4j17vxylf1" path="res://gd/line_edit.gd" id="1_pthv5"]
-[ext_resource type="Script" uid="uid://cv6wccvoo5tq2" path="res://gd/terminal.gd" id="2_20dwh"]
-[ext_resource type="Script" uid="uid://bktawfmgkn8w8" path="res://gd/scroll_container.gd" id="2_pfb6l"]
+[ext_resource type="Script" uid="uid://bid4j17vxylf1" path="res://gd/Terminal/line_edit.gd" id="1_pthv5"]
+[ext_resource type="Script" uid="uid://cv6wccvoo5tq2" path="res://gd/Terminal/terminal.gd" id="2_20dwh"]
+[ext_resource type="Script" uid="uid://bktawfmgkn8w8" path="res://gd/Terminal/scroll_container.gd" id="2_pfb6l"]
 
 [node name="Terminal" type="Control" unique_id=2139824549]
 custom_minimum_size = Vector2(696, 611)

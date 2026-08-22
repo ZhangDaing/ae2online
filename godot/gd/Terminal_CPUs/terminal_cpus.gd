@@ -5,7 +5,7 @@ extends Control
 @onready var cpu_container = $Background/ScrollContainer/CPUContainer
 @onready var reflash_timer = $ReflashTimer
 
-const CPU_SCENCE = preload("res://tscn/cpu.tscn")
+const CPU_SCENCE = preload("res://tscn/Terminal_CPUs/cpu.tscn")
 
 var _url = ""
 var _token: Dictionary = {}
@@ -59,6 +59,8 @@ func _on_request_completed(
 	if response_code != 200:
 		print("请求失败，状态码: ", response_code)
 		return
+	var cpus = data.get("cpus", [])
+	EventBus.terminal_cpus_updated.emit(cpus)
 	refresh_cpus(data.get("cpus", []))
 #---------------------------------------------------
 # 刷新cpu状态
