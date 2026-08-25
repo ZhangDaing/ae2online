@@ -2,6 +2,7 @@ extends Control
 
 #---------------------------------------------------
 @onready var http_request = $HTTPRequest
+@onready var http_cancel = $HTTPCancel
 @onready var cpu_container = $Background/ScrollContainer/CPUContainer
 @onready var reflash_timer = $ReflashTimer
 
@@ -76,6 +77,7 @@ func refresh_cpus(cpus: Array) -> void:
 			cpu_cache[cpu_name].update_data(cpu)
 		else:
 			var cpu_card = CPU_SCENCE.instantiate()
+			cpu_card.cancel_requested.connect(_on_cpu_cancel_requested)
 			cpu_card.set_data(cpu)
 			cpu_container.add_child(cpu_card)
 			cpu_cache[cpu_name] = cpu_card
@@ -85,3 +87,22 @@ func refresh_cpus(cpus: Array) -> void:
 		if not keep_cards.has(cpu_name):
 			cpu_cache[cpu_name].queue_free()
 			cpu_cache.erase(cpu_name)
+
+#---------------------------------------------------
+# 取消任务请求
+func _on_cpu_cancel_requested(index: int) -> void:
+	var body = JSON.stringify({"index": index})
+	http_cancel.request(
+		_url + "/cpu/cancel",
+		[ "Authorization: Bearer " + _token.get("token", "") , "Content-Type: application/json" ],
+		HTTPClient.METHOD_POST,body
+	)
+
+func _on_cancel_request_completed(
+	result: int, 
+	response_code: int, 
+	_headers: PackedStringArray, 
+	_body: PackedByteArray
+) -> void:
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		request_data()   # 刷新CPU列表

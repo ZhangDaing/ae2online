@@ -1,5 +1,8 @@
 extends Control
 
+const THEME_DARK = preload("res://assest/Dark/Dark_theme.tres")
+const THEME_LIGHT = preload("res://assest/Light/Light_theme.tres")
+
 #---------------------------------------------------
 @onready var terminal = $Terminal
 @onready var terminal_choose = $TerminalChoose
@@ -15,6 +18,8 @@ func _ready() -> void:
 	EventBus.terminal_logged.connect(_on_terminal_logged)
 	EventBus.terminal_choosed.connect(_on_terminal_choosed)
 	EventBus.account_config_changed.connect(_on_account_config_changed)
+	EventBus.theme_config_changed.connect(_on_theme_changed)
+	_on_theme_changed(int(ConfigManager.get_config("theme", 0))) 
 
 func _on_terminal_logged(url:String, token:Dictionary) -> void:
 	var id = int(token.get("id", 1))
@@ -36,3 +41,11 @@ func _on_account_config_changed() -> void:
 	# 清空终端数据
 	terminals.clear()
 	max_id = 0
+
+func _on_theme_changed(theme_index:int) -> void:
+	if theme_index == 0:
+		# 应用深色主题
+		self.theme = THEME_DARK
+	else:
+		# 应用亮色主题
+		self.theme = THEME_LIGHT

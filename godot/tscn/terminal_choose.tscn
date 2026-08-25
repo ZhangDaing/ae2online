@@ -1,6 +1,5 @@
 [gd_scene format=3 uid="uid://bkhdon3bagbhc"]
 
-[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_ucvc5"]
 [ext_resource type="Script" uid="uid://cyxhrbewf6p6i" path="res://gd/terminal_choose.gd" id="2_sr3jb"]
 
 [node name="TerminalChoose" type="Control" unique_id=799393083]
@@ -12,7 +11,6 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_ucvc5")
 script = ExtResource("2_sr3jb")
 
 [node name="Panel" type="Panel" parent="." unique_id=1409972170]

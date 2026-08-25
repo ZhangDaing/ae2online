@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://85sh10uvtdub"]
+
+[ext_resource type="Script" uid="uid://bvjdfcnn6dfqg" path="res://gd/cancel.gd" id="1_6bahq"]
+
+[node name="Cancel" type="Button" unique_id=638857433]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -30.0
+offset_bottom = 30.0
+grow_horizontal = 0
+flat = true
+script = ExtResource("1_6bahq")
+
+[node name="Label" type="Label" parent="." unique_id=1691321669]
+layout_mode = 0
+offset_left = 9.0
+offset_top = -4.0
+offset_right = 24.0
+offset_bottom = 26.0
+text = "x"
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class WebServer {
     private static final Logger LOGGER = LoggerFactory.getLogger("AE2Online Web");
@@ -174,8 +175,10 @@ public class WebServer {
                         ctx.json(Map.of("error", "no terminal connected to a network"));
                         return;
                     }
+                    AtomicInteger idx = new AtomicInteger(0);
                     var cpus = grid.getCraftingService().getCpus().stream().map(cpu -> {
                         Map<String, Object> m = new HashMap<>();
+                        m.put("index", idx.getAndIncrement());
                         m.put("busy", cpu.isBusy());
                         m.put("storage", cpu.getAvailableStorage());
                         m.put("coProcessors", cpu.getCoProcessors());
@@ -194,6 +197,41 @@ public class WebServer {
                         return m;
                     }).toList();
                     ctx.json(Map.of("cpus", cpus));
+                });
+                
+                // 取消指定CPU的当前任务
+                config.routes.post("/cpu/cancel", ctx -> {
+                    String auth = ctx.header("Authorization");
+                    String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
+                    var terminal = TokenRegistry.getTerminal(token);
+                    if (terminal == null) {
+                        ctx.status(401).json(Map.of("error", "登录过期"));
+                        return;
+                    }
+                    var grid = terminal.getGrid();
+                    if (grid == null) {
+                        ctx.json(Map.of("error", "no terminal connected to a network"));
+                        return;
+                    }
+
+                    var body = ctx.bodyAsClass(Map.class);
+                    if (!(body.get("index") instanceof Number n)) {
+                        ctx.status(400).json(Map.of("error", "参数错误"));
+                        return;
+                    }
+                    var cpuList = List.copyOf(grid.getCraftingService().getCpus());
+                    int index = n.intValue();
+                    if (index < 0 || index >= cpuList.size()) {
+                        ctx.status(400).json(Map.of("error", "CPU索引无效"));
+                        return;
+                    }
+                    var cpu = cpuList.get(index);
+                    if (cpu.isBusy()) {
+                        cpu.cancelJob();
+                        ctx.json(Map.of("success", true));
+                    } else {
+                        ctx.json(Map.of("success", false, "error", "CPU当前无任务"));
+                    }
                 });
 
                 // 计算合成方案

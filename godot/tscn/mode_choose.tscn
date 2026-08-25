@@ -1,6 +1,5 @@
 [gd_scene format=3 uid="uid://45s5sawws5b"]
 
-[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_wjnf3"]
 [ext_resource type="Script" uid="uid://c20bvayfi4n21" path="res://gd/mode_choose.gd" id="2_7lchm"]
 
 [node name="ModeChoose" type="Control" unique_id=830883217]
@@ -12,7 +11,6 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_wjnf3")
 script = ExtResource("2_7lchm")
 
 [node name="HBoxContainer" type="VBoxContainer" parent="." unique_id=1598065173]

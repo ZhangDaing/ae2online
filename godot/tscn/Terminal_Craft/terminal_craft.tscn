@@ -1,6 +1,5 @@
 [gd_scene format=3 uid="uid://o5a3xleb0wt8"]
 
-[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_8casj"]
 [ext_resource type="Script" uid="uid://t4gcifhst1dl" path="res://gd/Terminal_Craft/terminal_craft.gd" id="2_js6gq"]
 [ext_resource type="Script" uid="uid://bid4j17vxylf1" path="res://gd/Terminal/line_edit.gd" id="2_vsqdq"]
 [ext_resource type="Script" uid="uid://bktawfmgkn8w8" path="res://gd/Terminal/scroll_container.gd" id="3_js6gq"]
@@ -15,7 +14,6 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_8casj")
 script = ExtResource("2_js6gq")
 
 [node name="Background" type="Panel" parent="." unique_id=1607258711]
@@ -33,7 +31,6 @@ offset_right = 348.0
 offset_bottom = 305.5
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_8casj")
 theme_type_variation = &"Background"
 
 [node name="VBox" type="VBoxContainer" parent="Background" unique_id=1441232633]

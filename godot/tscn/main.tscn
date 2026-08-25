@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://d0wunqvwt5tbx" path="res://tscn/Terminal_CPUs/terminal_cpus.tscn" id="6_8d387"]
 [ext_resource type="PackedScene" uid="uid://bkhdon3bagbhc" path="res://tscn/terminal_choose.tscn" id="6_8kplt"]
 [ext_resource type="PackedScene" uid="uid://o5a3xleb0wt8" path="res://tscn/Terminal_Craft/terminal_craft.tscn" id="7_mn4ff"]
+[ext_resource type="PackedScene" uid="uid://bhi5o4o26lj7g" path="res://tscn/Config/config_button.tscn" id="10_mn4ff"]
 
 [node name="Main" type="Control" unique_id=97592994]
 layout_mode = 3
@@ -66,8 +67,23 @@ grow_horizontal = 1
 grow_vertical = 1
 
 [node name="Config" parent="." unique_id=1767968710 instance=ExtResource("4_g6ans")]
+visible = false
 layout_mode = 1
 
 [node name="Tooltip" parent="." unique_id=1485918006 instance=ExtResource("5_g6ans")]
 visible = false
 layout_mode = 1
+
+[node name="ConfigButton" parent="." unique_id=503928780 instance=ExtResource("10_mn4ff")]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 412.0
+offset_top = -300.0
+offset_right = 540.0
+offset_bottom = -240.0
+grow_horizontal = 2
+grow_vertical = 2

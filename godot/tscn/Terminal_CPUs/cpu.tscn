@@ -1,6 +1,5 @@
 [gd_scene format=3 uid="uid://c3hlcxqvklku5"]
 
-[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_iylxb"]
 [ext_resource type="Script" uid="uid://cj171rhajni7m" path="res://gd/Terminal_CPUs/cpu.gd" id="2_trepi"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cmxhr"]
@@ -14,7 +13,6 @@ custom_minimum_size = Vector2(664, 60)
 custom_maximum_size = Vector2(664, 60)
 layout_mode = 3
 anchors_preset = 0
-theme = ExtResource("1_iylxb")
 script = ExtResource("2_trepi")
 
 [node name="Panel" type="Panel" parent="." unique_id=503117597]
@@ -94,5 +92,37 @@ grow_horizontal = 0
 grow_vertical = 2
 text = "00:00:21"
 
+[node name="Cancel" type="Panel" parent="." unique_id=190906577]
+visible = false
+custom_minimum_size = Vector2(196, 46)
+custom_maximum_size = Vector2(196, 46)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"BackgroundPanel"
+
+[node name="Button" type="Button" parent="Cancel" unique_id=434628079]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -94.0
+offset_top = -19.0
+offset_right = 94.0
+offset_bottom = 19.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "取消合成任务"
+flat = true
+
+[connection signal="gui_input" from="." to="." method="_on_gui_input"]
 [connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
+[connection signal="pressed" from="Cancel/Button" to="." method="_on_cancel_pressed"]

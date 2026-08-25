@@ -1,21 +1,20 @@
 [gd_scene format=3 uid="uid://qg8fy421pj4u"]
 
-[ext_resource type="Theme" uid="uid://dl817wlk6v10n" path="res://assest/Dark/Dark_theme.tres" id="1_k8dkr"]
 [ext_resource type="Script" uid="uid://b5qjm4dwpimxx" path="res://gd/Terminal_Craft/craft_confirm.gd" id="2_tbub3"]
+[ext_resource type="PackedScene" uid="uid://85sh10uvtdub" path="res://tscn/cancel.tscn" id="3_fqly0"]
 
 [node name="CraftConfirm" type="Control" unique_id=1579353092]
 layout_mode = 3
 anchor_right = 0.61200005
 anchor_bottom = 0.80300003
-offset_right = 0.6399536
-offset_bottom = -0.16003418
+offset_right = 16.639954
+offset_bottom = 15.839966
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_k8dkr")
 script = ExtResource("2_tbub3")
 
 [node name="Background" type="Panel" parent="." unique_id=514691049]
-custom_minimum_size = Vector2(784, 578)
+custom_minimum_size = Vector2(800, 594)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,7 +30,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
 offset_top = 12.0
-offset_right = -565.0
+offset_right = -264.0
 offset_bottom = -536.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -46,6 +45,8 @@ offset_left = 376.0
 offset_top = 12.0
 offset_right = -32.0
 offset_bottom = -536.0
+grow_horizontal = 2
+grow_vertical = 2
 text = "128KB"
 horizontal_alignment = 2
 
@@ -59,6 +60,8 @@ offset_left = 16.0
 offset_top = 46.0
 offset_right = -16.0
 offset_bottom = -104.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_type_variation = &"BackgroundPanel"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="ScrollPanel" unique_id=142184186]
@@ -66,6 +69,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -148,6 +155,8 @@ offset_left = 247.0
 offset_top = 494.0
 offset_right = -345.0
 offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Panel" type="Panel" parent="CPUs" unique_id=274803376]
 layout_mode = 1
@@ -159,16 +168,22 @@ grow_vertical = 2
 theme_type_variation = &"BackgroundPanel"
 
 [node name="OptionButton" type="OptionButton" parent="CPUs" unique_id=252792607]
+custom_minimum_size = Vector2(200, 56)
+custom_maximum_size = Vector2(200, 56)
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = -1
+anchor_left = 0.01923077
+anchor_top = 0.0625
+anchor_right = 0.9807692
+anchor_bottom = 0.9375
 offset_left = 4.0
 offset_top = 4.0
 offset_right = -4.0
 offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
+flat = true
+metadata/_edit_use_anchors_ = true
 
 [node name="Count" type="Control" parent="." unique_id=1063771976]
 layout_mode = 1
@@ -179,6 +194,8 @@ offset_left = 22.0
 offset_top = 494.0
 offset_right = -570.0
 offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Panel" type="Panel" parent="Count" unique_id=1913093555]
 layout_mode = 1
@@ -200,10 +217,22 @@ offset_right = -4.0
 offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
+min_value = 1.0
+max_value = 1e+15
+value = 1.0
+rounded = true
+allow_greater = true
+custom_arrow_step = 1.0
+custom_arrow_round = true
 
 [node name="HTTPPlan" type="HTTPRequest" parent="." unique_id=344066586]
 
 [node name="HTTPCraft" type="HTTPRequest" parent="." unique_id=260072159]
 
+[node name="Cancel" parent="." unique_id=513475006 instance=ExtResource("3_fqly0")]
+layout_mode = 1
+
+[connection signal="pressed" from="Craft/Craft" to="." method="_on_craft_pressed"]
+[connection signal="pressed" from="Plan/PlanButton" to="." method="_on_plan_pressed"]
 [connection signal="request_completed" from="HTTPPlan" to="." method="_on_plan_completed"]
 [connection signal="request_completed" from="HTTPCraft" to="." method="_on_craft_completed"]

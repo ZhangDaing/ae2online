@@ -5,8 +5,11 @@ extends Control
 @onready var job_label = $VBox/HBox/JobName
 @onready var time_label = $VBox/HBox/Time
 @onready var progress_bar = $VBox/ProgressBar
+@onready var cancel_button = $Cancel
 
 var cpu_data: Dictionary = {}
+
+signal cancel_requested(cpu_index: int)
 #---------------------------------------------------
 # ready函数
 func _ready() -> void:
@@ -76,3 +79,26 @@ func _format_bytes(value) -> String:
 
 @warning_ignore_restore("narrowing_conversion")
 @warning_ignore_restore("integer_division")
+
+#---------------------------------------------------
+func _on_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		#如果取消按钮不可见
+		if event.button_index == MOUSE_BUTTON_RIGHT and cpu_data.get("busy", false):
+			cancel_button.global_position = event.global_position   # 将菜单移到鼠标位置
+			cancel_button.show()
+
+func _on_cancel_pressed() -> void:
+	if cpu_data.get("busy", false): 
+		cancel_requested.emit(int(cpu_data.get("index", -1)))
+		cancel_button.hide()
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		# 按钮不可见时返回
+		if not cancel_button.visible:
+			return
+		# 如果点击在按钮上返回
+		if cancel_button.get_global_rect().has_point(event.global_position):
+			return
+		cancel_button.hide()

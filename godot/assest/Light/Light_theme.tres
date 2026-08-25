@@ -29,4 +29,5 @@ Background/base_type = &"Panel"
 Background/styles/panel = SubResource("StyleBoxTexture_jy7de")
 BackgroundPanel/base_type = &"Panel"
 BackgroundPanel/styles/panel = SubResource("StyleBoxTexture_08lye")
-ScrollContainer/styles/panel = SubResource("StyleBoxTexture_d41j6")
+Scroll/base_type = &"ScrollContainer"
+Scroll/styles/panel = SubResource("StyleBoxTexture_d41j6")
