@@ -1,9 +1,11 @@
 package com.zhangdaing.ae2online;
 
 import com.zhangdaing.ae2online.blockentity.OnlineTerminalBlockEntity;
-import com.zhangdaing.ae2online.web.WebServer;
 import com.zhangdaing.ae2online.block.OnlineTerminalBlock;
 import com.zhangdaing.ae2online.UI.Networking;
+import com.zhangdaing.ae2online.web.WebServerManager;
+
+import appeng.api.ids.AECreativeTabIds;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -12,7 +14,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -21,6 +22,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 
 @Mod(ae2online.MODID)
 public class ae2online
@@ -30,8 +33,6 @@ public class ae2online
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MODID);
-
-
 
     //注册方块
     public static final RegistryObject<Block> ONLINE_TERMINAL = BLOCKS.register("online_terminal", 
@@ -55,20 +56,22 @@ public class ae2online
         ITEMS.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
 
-
         MinecraftForge.EVENT_BUS.register(this);
+        modEventBus.addListener(ae2online::addToAECreativeTab);
 
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
-
-        // 服务器启动时开 Web 服务器，停止时关
-        MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent e) -> WebServer.startsever());
-        MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> WebServer.stop());
-
         // 注册网络消息
         Networking.register();
+
+        MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
+            WebServerManager.stopAll();
+        });
     }
 
-
-
+    public static void addToAECreativeTab(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey().equals(AECreativeTabIds.MAIN)) {
+            event.accept(new ItemStack(ONLINE_TERMINAL_ITEM.get()));
+        }
+    }
 }

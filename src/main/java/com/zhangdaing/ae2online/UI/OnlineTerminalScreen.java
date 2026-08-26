@@ -29,10 +29,13 @@ public class OnlineTerminalScreen extends Screen {
         int w = 200, h = 90;
         int cx = (width - w) / 2, cy = (height - h) / 2;
 
+        String defaultUrl = "http://127.0.0.1:8080";
+        String defaultUsername = "admin";
+
         urlBox = new EditBox(font, cx + 30, cy + 15, w - 20, 20, Component.literal("URL"));
-        urlBox.setValue(url);  // 预填
+        urlBox.setValue(url != null ? url : defaultUrl);
         usernameBox = new EditBox(font, cx + 30, cy + 40, w - 20, 20, Component.literal("Username"));
-        usernameBox.setValue(username);
+        usernameBox.setValue(username != null ? username : defaultUsername);
         passwordBox = new EditBox(font, cx + 30, cy + 65, w - 20, 20, Component.literal("Password"));
         passwordBox.setValue(password);
 

@@ -1,16 +1,5 @@
 package com.zhangdaing.ae2online.web;
 
-import io.javalin.Javalin;
-import io.javalin.http.HandlerType;
-
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistries;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.zhangdaing.ae2online.UI.TokenRegistry;
-
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.crafting.ICraftingCPU;
@@ -21,392 +10,320 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 import appeng.me.helpers.MachineSource;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+
+import com.zhangdaing.ae2online.UI.TokenRegistry;
+import com.zhangdaing.ae2online.blockentity.OnlineTerminalBlockEntity;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Type;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class WebServer {
     private static final Logger LOGGER = LoggerFactory.getLogger("AE2Online Web");
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
+    private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {}.getType();
+    private static final Pattern ICON_RE = Pattern.compile("^/icon/([^/]+)/([^/]+)$");
 
-    private static Javalin app;
+    private final HttpServer server;
+    private final int port;
+    private volatile boolean running = false;
 
-    // 启动Web服务器
-    public static void startsever(){
-        // 如果正在运行
-        if (app != null) {
-            return;
-        }
+    public WebServer(int port) throws IOException {
+        this.port = port;
+        this.server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+        server.createContext("/", (exchange) -> handle(exchange));
+        server.setExecutor(Executors.newFixedThreadPool(8));
+    }
 
+    public void start() {
+        server.start();
+        running = true;
+    }
 
-        ClassLoader original = Thread.currentThread().getContextClassLoader();
+    public void stop() {
+        server.stop(0);
+        running = false;
+    }
+
+    public int getPort() { return port; }
+    public boolean isRunning() { return running; }
+
+    private void handle(HttpExchange ex) throws IOException {
         try {
-        // 切换为当前类的类加载器
-            Thread.currentThread().setContextClassLoader(WebServer.class.getClassLoader());
-
-        
-            // 创建Javalin实例
-            app = Javalin.create(config -> {
-                // 配置跨域请求
-                config.routes.before(ctx -> {
-                String origin = ctx.header("Origin");
-                // 非游览器请求，通过
-                if (origin == null){
-                    return;
-                }
-                // 只允许本地请求
-                if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")){
-                    ctx.header("Access-Control-Allow-Origin", origin);
-                    ctx.header("Access-Control-Allow-Credentials", "true");
-                    //
-                    if (ctx.method() == HandlerType.OPTIONS) {
-                        ctx.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-                        ctx.header("Access-Control-Allow-Headers", "Content-Type");
-                        ctx.status(204);
-                        return;
-                    }
+            String origin = ex.getRequestHeaders().getFirst("Origin");
+            if ("OPTIONS".equalsIgnoreCase(ex.getRequestMethod())) {
+                cors(ex, origin);
+                ex.sendResponseHeaders(204, -1);
                 return;
-                }
-                // 非本地请求，拒绝
-                ctx.status(403).result("Forbidden");
-                });
-
-                // 配置路由
-                // 返回存储物品列表
-                config.routes.get("/storage", ctx -> {
-                String auth = ctx.header("Authorization");
-                String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
-                var terminal = TokenRegistry.getTerminal(token);
-                if (terminal == null) {
-                    ctx.status(401).json(Map.of("error", "登录过期"));
-                    return;
-                }
-                var grid = terminal.getGrid();
-                if (grid == null){
-                    ctx.json(Map.of("error", "no terminal connected to a network"));
-                    return;
-                }
-                var storage = grid.getStorageService().getCachedInventory();
-                var items = storage.keySet().stream().map(
-                    key -> {
-                        var id = key.getId();
-                        return Map.of(
-                            "id", key.getDisplayName().getString(),
-                            "count", storage.get(key),
-                            "icon", "/icon/" + id.getNamespace() + "/" + id.getPath(),
-                            "modid", id.getNamespace(),
-                            "amountPerUnit", key.getAmountPerUnit(),
-                            "rawId", id.toString()
-                        );
-                    }
-                ).toList();
-                ctx.json(Map.of("items", items));
-                });
-
-                // 返回图标
-                config.routes.get("/icon/{modid}/{itemid}", ctx -> {
-                    String modid = ctx.pathParam("modid");
-                    String itemid = ctx.pathParam("itemid");
-                    String iconPath = com.zhangdaing.ae2online.Config.iconPath;
-                    java.nio.file.Path icon = java.nio.file.Paths.get("./" + iconPath, modid+ "__" + itemid + ".png");
-                    if (java.nio.file.Files.exists(icon)) {
-                        ctx.contentType("image/png");
-                        ctx.result(java.nio.file.Files.readAllBytes(icon));
-                    } else {
-                        ctx.status(404);
-                    }
-                });
-
-                // 登录
-                config.routes.post("/login", ctx -> {
-                    var body = ctx.bodyAsClass(Map.class);
-                    String username = (String) body.get("username");
-                    String password = (String) body.get("password");
-
-                    var terminal = TerminalRegistry.findByUsername(username);
-                    if (terminal == null || !password.equals(terminal.getPassword())) {
-                        ctx.status(401).result("认证失败");
-                        return;
-                    }
-                    String token = TokenRegistry.createToken(terminal);
-                    ctx.json(Map.of("token", token));
-                });
-
-                // 返回可合成物品
-                config.routes.get("/craftable", ctx -> {
-                    String auth = ctx.header("Authorization");
-                    String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
-                    var terminal = TokenRegistry.getTerminal(token);
-                    if (terminal == null) {
-                        ctx.status(401).json(Map.of("error", "登录过期"));
-                        return;
-                    }
-                    var grid = terminal.getGrid();
-                    if (grid == null){
-                        ctx.json(Map.of("error", "no terminal connected to a network"));
-                        return;
-                    }
-                    var items = grid.getCraftingService().getCraftables(AEItemKey.filter()).stream().map(
-                        key -> {
-                            var id = key.getId();
-                            return Map.of(
-                                "id", key.getDisplayName().getString(),
-                                "rawId", id.toString(),
-                                "modid", id.getNamespace(),
-                                "icon", "/icon/" + id.getNamespace() + "/" + id.getPath()
-                            );
-                        }
-                    ).toList();
-                    ctx.json(Map.of("items", items));
-                });
-
-                // 返回cpu状态
-                config.routes.get("/cpu", ctx -> {
-                    String auth = ctx.header("Authorization");
-                    String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
-                    var terminal = TokenRegistry.getTerminal(token);
-                    if (terminal == null) {
-                        ctx.status(401).json(Map.of("error", "登录过期"));
-                        return;
-                    }
-                    var grid = terminal.getGrid();
-                    if (grid == null){
-                        ctx.json(Map.of("error", "no terminal connected to a network"));
-                        return;
-                    }
-                    AtomicInteger idx = new AtomicInteger(0);
-                    var cpus = grid.getCraftingService().getCpus().stream().map(cpu -> {
-                        Map<String, Object> m = new HashMap<>();
-                        m.put("index", idx.getAndIncrement());
-                        m.put("busy", cpu.isBusy());
-                        m.put("storage", cpu.getAvailableStorage());
-                        m.put("coProcessors", cpu.getCoProcessors());
-                        m.put("name", cpu.getName() == null ? null : cpu.getName().getString());
-                        if (cpu.getJobStatus() != null) {
-                            var st = cpu.getJobStatus();
-                            Map<String, Object> job = new HashMap<>();
-                            job.put("what", st.crafting().what().getDisplayName().getString());
-                            job.put("amount", st.crafting().amount());
-                            job.put("progress", st.progress() / (double) st.totalItems() * st.crafting().amount());
-                            job.put("elapsedTimeNanos", st.elapsedTimeNanos());
-                            m.put("job", job);
-                        } else {
-                            m.put("job", null);
-                        }
-                        return m;
-                    }).toList();
-                    ctx.json(Map.of("cpus", cpus));
-                });
-                
-                // 取消指定CPU的当前任务
-                config.routes.post("/cpu/cancel", ctx -> {
-                    String auth = ctx.header("Authorization");
-                    String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
-                    var terminal = TokenRegistry.getTerminal(token);
-                    if (terminal == null) {
-                        ctx.status(401).json(Map.of("error", "登录过期"));
-                        return;
-                    }
-                    var grid = terminal.getGrid();
-                    if (grid == null) {
-                        ctx.json(Map.of("error", "no terminal connected to a network"));
-                        return;
-                    }
-
-                    var body = ctx.bodyAsClass(Map.class);
-                    if (!(body.get("index") instanceof Number n)) {
-                        ctx.status(400).json(Map.of("error", "参数错误"));
-                        return;
-                    }
-                    var cpuList = List.copyOf(grid.getCraftingService().getCpus());
-                    int index = n.intValue();
-                    if (index < 0 || index >= cpuList.size()) {
-                        ctx.status(400).json(Map.of("error", "CPU索引无效"));
-                        return;
-                    }
-                    var cpu = cpuList.get(index);
-                    if (cpu.isBusy()) {
-                        cpu.cancelJob();
-                        ctx.json(Map.of("success", true));
-                    } else {
-                        ctx.json(Map.of("success", false, "error", "CPU当前无任务"));
-                    }
-                });
-
-                // 计算合成方案
-                config.routes.post("/craft/plan", ctx -> {
-                    String auth = ctx.header("Authorization");
-                    String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
-                    var terminal = TokenRegistry.getTerminal(token);
-                    if (terminal == null) {
-                        ctx.status(401).json(Map.of("error", "登录过期"));
-                        return;
-                    }
-                    var grid = terminal.getGrid();
-                    if (grid == null) {
-                        ctx.json(Map.of("error", "no terminal connected to a network"));
-                        return;
-                    }
-                    var body = ctx.bodyAsClass(Map.class);
-                    String rawId = (String) body.get("rawId");
-                    long amount = ((Number) body.get("count")).longValue();
-                    if (rawId == null || amount <= 0) {
-                        ctx.status(400).json(Map.of("error", "参数错误"));
-                        return;
-                    }
-                    var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(rawId));
-                    if (item == null) {
-                        ctx.status(400).json(Map.of("error", "无效的物品ID"));
-                        return;
-                    }
-                    var what = AEItemKey.of(item);
-                    var crafting = grid.getCraftingService();
-                    IActionHost host = new IActionHost() {
-                        @Override
-                        public IGridNode getActionableNode() {
-                            return grid.getPivot();
-                        }
-                    };
-                    var src = new MachineSource(host);
-                    ICraftingSimulationRequester simRequester = () -> src;
-
-                    ICraftingPlan plan;
-                    try {
-                        plan = crafting.beginCraftingCalculation(
-                                grid.getPivot().getLevel(),
-                                simRequester,
-                                what,
-                                amount,
-                                CalculationStrategy.REPORT_MISSING_ITEMS
-                        ).get();
-                    } catch (InterruptedException e) {
-                        ctx.status(499).json(Map.of("error", "计算已被取消"));
-                        return;
-                    } catch (Exception e) {
-                        ctx.status(500).json(Map.of("error", "合成计算异常: " + e.getMessage()));
-                        return;
-                    }
-
-                    var out = plan.finalOutput().what();
-                    var resp = new HashMap<String, Object>();
-                    resp.put("id", out.getDisplayName().getString());
-                    resp.put("count", plan.finalOutput().amount());
-                    resp.put("bytes", plan.bytes());                            // 所需字节
-                    resp.put("simulation", plan.simulation());                  // 是否缺料
-                    resp.put("used", keyCounterToList(plan.usedItems()));       // 从存储取出的耗材
-                    resp.put("emitted", keyCounterToList(plan.emittedItems())); // 需合成的中间产物
-                    resp.put("missing", keyCounterToList(plan.missingItems())); // 缺的材料
-                    ctx.json(resp);
-                });
-
-                // 提交合成指令
-                config.routes.post("/craft", ctx -> {
-                    String auth = ctx.header("Authorization");
-                    String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7) : null;
-                    var terminal = TokenRegistry.getTerminal(token);
-                    if (terminal == null) {
-                        ctx.status(401).json(Map.of("error", "登录过期"));
-                        return;
-                    }
-                    var grid = terminal.getGrid();
-                    if (grid == null) {
-                        ctx.json(Map.of("error", "no terminal connected to a network"));
-                        return;
-                    }
-
-                    var body = ctx.bodyAsClass(Map.class);
-                    String rawId = (String) body.get("rawId");
-                    long amount = ((Number) body.get("count")).longValue();
-                    if (rawId == null || amount <= 0) {
-                        ctx.status(400).json(Map.of("error", "参数错误"));
-                        return;
-                    }
-                    var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(rawId));
-                    if (item == null) {
-                        ctx.status(400).json(Map.of("error", "无效的物品ID"));
-                        return;
-                    }
-                    var what = AEItemKey.of(item);
-                    var crafting = grid.getCraftingService();
-
-                    IActionHost host = new IActionHost() {
-                        @Override
-                        public IGridNode getActionableNode() {
-                            return grid.getPivot();
-                        }
-                    };
-                    var src = new MachineSource(host);
-                    ICraftingSimulationRequester simRequester = () -> src;
-
-                    // 计算合成计划
-                    ICraftingPlan plan;
-                    try {
-                        plan = crafting.beginCraftingCalculation(
-                                grid.getPivot().getLevel(),
-                                simRequester,
-                                what,
-                                amount,
-                                CalculationStrategy.REPORT_MISSING_ITEMS
-                        ).get();
-                    } catch (InterruptedException e) {
-                        ctx.status(499).json(Map.of("error", "计算已被取消"));
-                        return;
-                    } catch (Exception e) {
-                        ctx.status(500).json(Map.of("error", "合成计算异常: " + e.getMessage()));
-                        return;
-                    }
-
-                    // 指定 CPU（可选，默认自动分配；-1 或不传 = 自动分配）
-                    ICraftingCPU target = null;
-                    if (body.get("cpu") instanceof Number n) {
-                        int cpuIndex = n.intValue();
-                        var cpuList = List.copyOf(crafting.getCpus());
-                        if (cpuIndex >= 0 && cpuIndex < cpuList.size()) {
-                            target = cpuList.get(cpuIndex);
-                        }
-                    }
-
-                    // 正式提交（缺料检查已交给前端 /craft/plan 控制）
-                    var result = crafting.submitJob(plan, null, target, target == null, src);
-                    if (result.successful()) {
-                        ctx.json(Map.of("success", true));
-                    } else {
-                        ctx.status(400).json(Map.of("error", String.valueOf(result.errorCode())));
-                    }
-                });
-
-            LOGGER.info("Web server started on port 11595");
-            }).start(11595); // 启动服务器，监听11595端口
-        }
-        finally {
-            // 恢复原来的类加载器
-            Thread.currentThread().setContextClassLoader(original);
+            }
+            if (origin != null && !(origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1"))) {
+                sendText(ex, 403, "Forbidden");
+                return;
+            }
+            String method = ex.getRequestMethod();
+            String path = ex.getRequestURI().getPath();
+            if ("GET".equals(method) && "/storage".equals(path)) storage(ex);
+            else if ("GET".equals(method) && "/craftable".equals(path)) craftable(ex);
+            else if ("GET".equals(method) && "/cpu".equals(path)) cpu(ex);
+            else if ("POST".equals(method) && "/login".equals(path)) login(ex);
+            else if ("POST".equals(method) && "/cpu/cancel".equals(path)) cpuCancel(ex);
+            else if ("POST".equals(method) && "/craft/plan".equals(path)) craftPlan(ex);
+            else if ("POST".equals(method) && "/craft".equals(path)) craft(ex);
+            else {
+                Matcher m = ICON_RE.matcher(path);
+                if ("GET".equals(method) && m.matches()) icon(ex, m.group(1), m.group(2));
+                else sendText(ex, 404, "Not Found");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error handling {} {}", ex.getRequestMethod(), ex.getRequestURI(), e);
+        } finally {
+            ex.close();
         }
     }
 
-    // 把 KeyCounter 转成前端耗材列表
-    private static List<Map<String, Object>> keyCounterToList(KeyCounter kc) {
-        var list = new ArrayList<Map<String, Object>>();
-        for (var e : kc) {
-            var key = e.getKey();
+    // ---------- 工具 ----------
+    private String token(HttpExchange ex) {
+        String a = ex.getRequestHeaders().getFirst("Authorization");
+        return a != null && a.startsWith("Bearer ") ? a.substring(7) : null;
+    }
+
+    private void cors(HttpExchange ex, String origin) {
+        if (origin != null && (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1"))) {
+            ex.getResponseHeaders().set("Access-Control-Allow-Origin", origin);
+            ex.getResponseHeaders().set("Access-Control-Allow-Credentials", "true");
+            ex.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            ex.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+        }
+    }
+
+    private void sendJson(HttpExchange ex, int status, Object obj) throws IOException {
+        byte[] body = GSON.toJson(obj).getBytes(StandardCharsets.UTF_8);
+        cors(ex, ex.getRequestHeaders().getFirst("Origin"));
+        ex.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+        ex.sendResponseHeaders(status, body.length);
+        try (OutputStream os = ex.getResponseBody()) { os.write(body); }
+    }
+
+    private void sendText(HttpExchange ex, int status, String text) throws IOException {
+        byte[] body = text.getBytes(StandardCharsets.UTF_8);
+        cors(ex, ex.getRequestHeaders().getFirst("Origin"));
+        ex.getResponseHeaders().set("Content-Type", "text/plain; charset=utf-8");
+        ex.sendResponseHeaders(status, body.length);
+        try (OutputStream os = ex.getResponseBody()) { os.write(body); }
+    }
+
+    private Map<String, Object> body(HttpExchange ex) throws IOException {
+        String raw = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        if (raw.isBlank()) return new HashMap<>();
+        return GSON.fromJson(raw, MAP_TYPE);
+    }
+
+    // ---------- 接口 ----------
+    private void storage(HttpExchange ex) throws IOException {
+        var t = TokenRegistry.getTerminal(token(ex));
+        if (t == null) { sendJson(ex, 401, Map.of("error", "登录过期")); return; }
+        var grid = t.getGrid();
+        if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
+        var items = grid.getStorageService().getCachedInventory().keySet().stream().map(key -> {
             var id = key.getId();
-            var m = new HashMap<String, Object>();
-            m.put("id", key.getDisplayName().getString());
+            return Map.of(
+                "id", key.getDisplayName().getString(),
+                "count", grid.getStorageService().getCachedInventory().get(key),
+                "icon", "/icon/" + id.getNamespace() + "/" + id.getPath(),
+                "modid", id.getNamespace(),
+                "amountPerUnit", key.getAmountPerUnit(),
+                "rawId", id.toString());
+        }).toList();
+        sendJson(ex, 200, Map.of("items", items));
+    }
+
+    private void icon(HttpExchange ex, String modid, String itemid) throws IOException {
+        Path icon = Paths.get("./" + com.zhangdaing.ae2online.Config.iconPath, modid + "__" + itemid + ".png");
+        if (Files.exists(icon)) {
+            byte[] data = Files.readAllBytes(icon);
+            ex.getResponseHeaders().set("Content-Type", "image/png");
+            ex.sendResponseHeaders(200, data.length);
+            try (OutputStream os = ex.getResponseBody()) { os.write(data); }
+        } else sendText(ex, 404, "Not Found");
+    }
+
+    private void login(HttpExchange ex) throws IOException {
+        Map<String, Object> b = body(ex);
+        String u = (String) b.get("username");
+        String p = (String) b.get("password");
+        OnlineTerminalBlockEntity matched = null;
+        for (var entry : TerminalRegistry.getAllTerminals().entrySet()) {
+            OnlineTerminalBlockEntity t = entry.getValue();
+            if (u != null && u.equals(t.getUsername()) && p != null && p.equals(t.getPassword())) {
+                matched = t;
+                break;
+            }
+        }
+        if (matched == null) {
+            sendText(ex, 401, "认证失败");
+            return;
+        }
+        sendJson(ex, 200, Map.of("token", TokenRegistry.createToken(matched)));
+    }
+
+    private void craftable(HttpExchange ex) throws IOException {
+        var t = TokenRegistry.getTerminal(token(ex));
+        if (t == null) { sendJson(ex, 401, Map.of("error", "登录过期")); return; }
+        var grid = t.getGrid();
+        if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
+        var items = grid.getCraftingService().getCraftables(AEItemKey.filter()).stream().map(key -> {
+            var id = key.getId();
+            return Map.of("id", key.getDisplayName().getString(), "rawId", id.toString(),
+                "modid", id.getNamespace(), "icon", "/icon/" + id.getNamespace() + "/" + id.getPath());
+        }).toList();
+        sendJson(ex, 200, Map.of("items", items));
+    }
+
+    private void cpu(HttpExchange ex) throws IOException {
+        var t = TokenRegistry.getTerminal(token(ex));
+        if (t == null) { sendJson(ex, 401, Map.of("error", "登录过期")); return; }
+        var grid = t.getGrid();
+        if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
+        AtomicInteger idx = new AtomicInteger();
+        var cpus = grid.getCraftingService().getCpus().stream().map(cpu -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("index", idx.getAndIncrement());
+            m.put("busy", cpu.isBusy());
+            m.put("storage", cpu.getAvailableStorage());
+            m.put("coProcessors", cpu.getCoProcessors());
+            m.put("name", cpu.getName() == null ? null : cpu.getName().getString());
+            if (cpu.getJobStatus() != null) {
+                var st = cpu.getJobStatus();
+                Map<String, Object> job = new HashMap<>();
+                job.put("what", st.crafting().what().getDisplayName().getString());
+                job.put("amount", st.crafting().amount());
+                job.put("progress", st.progress() / (double) st.totalItems() * st.crafting().amount());
+                job.put("elapsedTimeNanos", st.elapsedTimeNanos());
+                m.put("job", job);
+            } else m.put("job", null);
+            return m;
+        }).toList();
+        sendJson(ex, 200, Map.of("cpus", cpus));
+    }
+
+    private void cpuCancel(HttpExchange ex) throws IOException {
+        var t = TokenRegistry.getTerminal(token(ex));
+        if (t == null) { sendJson(ex, 401, Map.of("error", "登录过期")); return; }
+        var grid = t.getGrid();
+        if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
+        Object idx = body(ex).get("index");
+        if (!(idx instanceof Number n)) { sendJson(ex, 400, Map.of("error", "参数错误")); return; }
+        var cpus = List.copyOf(grid.getCraftingService().getCpus());
+        int i = n.intValue();
+        if (i < 0 || i >= cpus.size()) { sendJson(ex, 400, Map.of("error", "CPU索引无效")); return; }
+        var cpu = cpus.get(i);
+        if (cpu.isBusy()) { cpu.cancelJob(); sendJson(ex, 200, Map.of("success", true)); }
+        else sendJson(ex, 200, Map.of("success", false, "error", "CPU当前无任务"));
+    }
+
+    private void craftPlan(HttpExchange ex) throws IOException {
+        var t = TokenRegistry.getTerminal(token(ex));
+        if (t == null) { sendJson(ex, 401, Map.of("error", "登录过期")); return; }
+        var grid = t.getGrid();
+        if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
+        Map<String, Object> b = body(ex);
+        String rawId = (String) b.get("rawId");
+        long amount = ((Number) b.get("count")).longValue();
+        if (rawId == null || amount <= 0) { sendJson(ex, 400, Map.of("error", "参数错误")); return; }
+        var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(rawId));
+        if (item == null) { sendJson(ex, 400, Map.of("error", "无效的物品ID")); return; }
+        ICraftingPlan plan;
+        try {
+            plan = plan(grid, AEItemKey.of(item), amount);
+        } catch (InterruptedException e) { sendJson(ex, 499, Map.of("error", "计算已被取消")); return; }
+        catch (Exception e) { sendJson(ex, 500, Map.of("error", "合成计算异常: " + e.getMessage())); return; }
+        var out = plan.finalOutput().what();
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("id", out.getDisplayName().getString());
+        resp.put("count", plan.finalOutput().amount());
+        resp.put("bytes", plan.bytes());
+        resp.put("simulation", plan.simulation());
+        resp.put("used", list(plan.usedItems()));
+        resp.put("emitted", list(plan.emittedItems()));
+        resp.put("missing", list(plan.missingItems()));
+        sendJson(ex, 200, resp);
+    }
+
+    private void craft(HttpExchange ex) throws IOException {
+        var t = TokenRegistry.getTerminal(token(ex));
+        if (t == null) { sendJson(ex, 401, Map.of("error", "登录过期")); return; }
+        var grid = t.getGrid();
+        if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
+        Map<String, Object> b = body(ex);
+        String rawId = (String) b.get("rawId");
+        long amount = ((Number) b.get("count")).longValue();
+        if (rawId == null || amount <= 0) { sendJson(ex, 400, Map.of("error", "参数错误")); return; }
+        var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(rawId));
+        if (item == null) { sendJson(ex, 400, Map.of("error", "无效的物品ID")); return; }
+        ICraftingPlan plan;
+        try {
+            plan = plan(grid, AEItemKey.of(item), amount);
+        } catch (InterruptedException e) { sendJson(ex, 499, Map.of("error", "计算已被取消")); return; }
+        catch (Exception e) { sendJson(ex, 500, Map.of("error", "合成计算异常: " + e.getMessage())); return; }
+        ICraftingCPU target = null;
+        if (b.get("cpu") instanceof Number n) {
+            int i = n.intValue();
+            var cpus = List.copyOf(grid.getCraftingService().getCpus());
+            if (i >= 0 && i < cpus.size()) target = cpus.get(i);
+        }
+        var result = grid.getCraftingService().submitJob(plan, null, target, target == null, source(grid));
+        if (result.successful()) sendJson(ex, 200, Map.of("success", true));
+        else sendJson(ex, 400, Map.of("error", String.valueOf(result.errorCode())));
+    }
+
+    // ★ 改动：plan、source、list 从 static 改为非静态
+    private ICraftingPlan plan(appeng.api.networking.IGrid grid, AEItemKey what, long amount) throws Exception {
+        MachineSource src = source(grid);
+        ICraftingSimulationRequester req = () -> src;
+        return grid.getCraftingService().beginCraftingCalculation(grid.getPivot().getLevel(), req, what, amount,
+                CalculationStrategy.REPORT_MISSING_ITEMS).get();
+    }
+
+    private MachineSource source(appeng.api.networking.IGrid grid) {
+        return new MachineSource(new IActionHost() {
+            @Override public IGridNode getActionableNode() { return grid.getPivot(); }
+        });
+    }
+
+    private List<Map<String, Object>> list(KeyCounter kc) {
+        List<Map<String, Object>> l = new ArrayList<>();
+        for (var e : kc) {
+            var id = e.getKey().getId();
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", e.getKey().getDisplayName().getString());
             m.put("count", e.getLongValue());
             m.put("rawId", id.toString());
             m.put("icon", "/icon/" + id.getNamespace() + "/" + id.getPath());
-            list.add(m);
+            l.add(m);
         }
-        return list;
-    }
-    
-    // 停止Web服务器
-    public static void stop() {
-        if (app != null) {
-            app.stop();
-            app = null;
-            LOGGER.info("Web server stopped");
-        }
+        return l;
     }
 }

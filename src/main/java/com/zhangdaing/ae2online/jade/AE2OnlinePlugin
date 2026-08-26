@@ -1,0 +1,83 @@
+package com.zhangdaing.ae2online.jade;
+
+import com.zhangdaing.ae2online.block.OnlineTerminalBlock;
+import com.zhangdaing.ae2online.blockentity.OnlineTerminalBlockEntity;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+
+import snownee.jade.api.BlockAccessor;
+import snownee.jade.api.IBlockComponentProvider;
+import snownee.jade.api.IServerDataProvider;
+import snownee.jade.api.ITooltip;
+import snownee.jade.api.IWailaClientRegistration;
+import snownee.jade.api.IWailaCommonRegistration;
+import snownee.jade.api.IWailaPlugin;
+import snownee.jade.api.WailaPlugin;
+import snownee.jade.api.config.IPluginConfig;
+
+@WailaPlugin
+public class AE2OnlineJadePlugin implements IWailaPlugin {
+
+    private static final ResourceLocation UID = new ResourceLocation("ae2online", "grid_state");
+    private static final String TAG_STATE = "gridNodeState";
+
+    private enum State { OFFLINE, NETWORK_BOOTING, MISSING_CHANNEL, ONLINE }
+
+    @Override
+    public void register(IWailaCommonRegistration registration) {
+        registration.registerBlockDataProvider(ServerData.INSTANCE, OnlineTerminalBlockEntity.class);
+    }
+
+    @Override
+    public void registerClient(IWailaClientRegistration registration) {
+        registration.registerBlockComponent(Tooltip.INSTANCE, OnlineTerminalBlock.class);
+    }
+
+    public enum ServerData implements IServerDataProvider<BlockAccessor> {
+        INSTANCE;
+
+        @Override
+        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+            if (accessor.getBlockEntity() instanceof OnlineTerminalBlockEntity be) {
+                data.putByte(TAG_STATE, (byte) stateOf(be).ordinal());
+            }
+        }
+
+        @Override
+        public ResourceLocation getUid() { return UID; }
+    }
+
+    public enum Tooltip implements IBlockComponentProvider {
+        INSTANCE;
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
+            CompoundTag data = accessor.getServerData();
+            if (data != null && data.contains(TAG_STATE, Tag.TAG_BYTE)) {
+                Component text = switch (State.values()[data.getByte(TAG_STATE)]) {
+                    case ONLINE -> Component.literal("设备在线");
+                    case OFFLINE -> Component.literal("设备离线");
+                    case MISSING_CHANNEL -> Component.literal("缺少频道");
+                    case NETWORK_BOOTING -> Component.literal("网络启动中");
+                };
+                tooltip.add(text.withStyle(ChatFormatting.GRAY));
+            }
+        }
+
+        @Override
+        public ResourceLocation getUid() { return UID; }
+    }
+
+    private static State stateOf(OnlineTerminalBlockEntity be) {
+        var node = be.getMainNode().getNode();
+        if (node == null || !node.isPowered()) return State.OFFLINE;
+        if (!node.hasGridBooted()) return State.NETWORK_BOOTING;
+        if (!node.meetsChannelRequirements()) return State.MISSING_CHANNEL;
+        return State.ONLINE;
+    }
+}
