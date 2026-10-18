@@ -45,7 +45,7 @@ public class WebServer {
     private static final Logger LOGGER = LoggerFactory.getLogger("AE2Online Web");
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {}.getType();
-    private static final Pattern ICON_RE = Pattern.compile("^/icon/([^/]+)/([^/]+)$");
+    private static final Pattern ICON_RE = Pattern.compile("^/icon/(.+)$");
 
     private final HttpServer server;
     private final int port;
@@ -97,7 +97,7 @@ public class WebServer {
             else if ("POST".equals(method) && "/craft".equals(path)) craft(ex);
             else {
                 Matcher m = ICON_RE.matcher(path);
-                if ("GET".equals(method) && m.matches()) icon(ex, m.group(1), m.group(2));
+                if ("GET".equals(method) && m.matches()) icon(ex, m.group(1));
                 else sendText(ex, 404, "Not Found");
             }
         } catch (Exception e) {
@@ -179,16 +179,66 @@ public class WebServer {
             return Map.of(
                 "id", key.getDisplayName().getString(),
                 "count", grid.getStorageService().getCachedInventory().get(key),
-                "icon", "/icon/" + id.getNamespace() + "/" + id.getPath(),
+                "icon", "/icon/" + urlEncode(iconFilename(key)),
                 "modid", id.getNamespace(),
                 "amountPerUnit", key.getAmountPerUnit(),
+                // uid 含 NBT，用于区分同物品不同变体（如不同伪装板）；rawId 仅 item id，供合成接口使用
+                "uid", uidOf(key),
                 "rawId", id.toString());
         }).toList();
         sendJson(ex, 200, Map.of("items", items));
     }
 
-    private void icon(HttpExchange ex, String modid, String itemid) throws IOException {
-        Path icon = Paths.get("./" + com.zhangdaing.ae2online.Config.iconPath, modid + "__" + itemid + ".png");
+    /**
+     * 图标文件名中的非法字符替换，规则与 icon-exporter 模组的 ImageExportUtil.escapeKey 保持一致：
+     *   ":" → "__"， "\"" → "'"， "/" → "___"
+     * 例如伪装板图标：ae2__facade__{item__'minecraft__oak_log'}.png
+     */
+    private static String escapeKey(String s) {
+        return s.replace(":", "__").replace("\"", "'").replace("/", "___");
+    }
+
+    /**
+     * 生成 icon-exporter 导出的图标文件名。
+     * 无 NBT：modid__itemid.png；有 NBT：modid__itemid__{nbt}.png
+     * 之前只用 modid__itemid.png，导致伪装板等带 NBT 物品命中不到图标（显示空白）。
+     */
+    private static String iconFilename(appeng.api.stacks.AEKey key) {
+        var id = key.getId();
+        StringBuilder sb = new StringBuilder(64);
+        sb.append(escapeKey(id.toString()));
+        if (key instanceof appeng.api.stacks.AEItemKey itemKey && itemKey.getTag() != null) {
+            sb.append("__").append(escapeKey(itemKey.getTag().toString()));
+        }
+        sb.append(".png");
+        return sb.toString();
+    }
+
+    /**
+     * 物品唯一标识（含 NBT），前端用它做卡片 key。
+     * 只用 item id 会让多个伪装板合并成一个条目。
+     */
+    private static String uidOf(appeng.api.stacks.AEKey key) {
+        return key.toTagGeneric().toString();
+    }
+
+    /** URL 路径段编码（空格等字符需编码为百分号形式）。 */
+    private static String urlEncode(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
+        } catch (Exception e) {
+            return s;
+        }
+    }
+
+    private void icon(HttpExchange ex, String filename) throws IOException {
+        // 防路径穿越：拒绝目录分隔符与 ..
+        if (filename.isEmpty() || filename.length() > 255
+                || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            sendText(ex, 400, "Bad Request");
+            return;
+        }
+        Path icon = Paths.get("./" + com.zhangdaing.ae2online.Config.iconPath, filename);
         if (Files.exists(icon)) {
             byte[] data = Files.readAllBytes(icon);
             ex.getResponseHeaders().set("Content-Type", "image/png");
@@ -236,7 +286,7 @@ public class WebServer {
         var items = grid.getCraftingService().getCraftables(AEItemKey.filter()).stream().map(key -> {
             var id = key.getId();
             return Map.of("id", key.getDisplayName().getString(), "rawId", id.toString(),
-                "modid", id.getNamespace(), "icon", "/icon/" + id.getNamespace() + "/" + id.getPath());
+                "modid", id.getNamespace(), "icon", "/icon/" + urlEncode(iconFilename(key)));
         }).toList();
         sendJson(ex, 200, Map.of("items", items));
     }
@@ -360,7 +410,7 @@ public class WebServer {
             m.put("id", e.getKey().getDisplayName().getString());
             m.put("count", e.getLongValue());
             m.put("rawId", id.toString());
-            m.put("icon", "/icon/" + id.getNamespace() + "/" + id.getPath());
+            m.put("icon", "/icon/" + urlEncode(iconFilename(e.getKey())));
             l.add(m);
         }
         return l;

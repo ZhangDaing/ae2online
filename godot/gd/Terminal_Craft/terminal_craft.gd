@@ -112,6 +112,11 @@ func _on_request_completed(
 func _on_terminal_storage_updated(items: Array) -> void:
 	terminal_item_cache = items
 #---------------------------------------------------
+# 卡片唯一键：优先用含 NBT 的 uid（区分同物品不同变体），
+# 兼容旧数据 fallback 到 rawId
+func _key(item: Dictionary) -> String:
+	return item.get("uid", item.get("rawId", ""))
+
 # 应用返回的数据
 # 遍历生成卡片
 func refresh_cards(items: Array) -> void:
@@ -119,7 +124,7 @@ func refresh_cards(items: Array) -> void:
 	var keep_cards: Dictionary = {}
 
 	for item in items:
-		var item_id = item.get("rawId", "")
+		var item_id = _key(item)
 		keep_cards[item_id] = true
 		if item_id in card_cache:
 			# 如果卡片已存在，则更新数据
@@ -140,7 +145,7 @@ func refresh_cards(items: Array) -> void:
 
 	# 重新排列卡片节点
 	for item in items:
-		var card = card_cache.get(item.get("rawId", ""))
+		var card = card_cache.get(_key(item))
 		card_container.move_child(card, card_container.get_child_count())
 
 	_apply_search_filter() # 应用检索过滤
@@ -167,12 +172,12 @@ func filter(items: Array) -> Dictionary:
 	if search_text == "":
 		# 检索为空，返回所有物品
 		for item in items:
-			filtered[item.get("rawId", "")] = true
+			filtered[_key(item)] = true
 		return filtered
 	# 否则，返回匹配的物品
 	for item in items:
 		if search_text.to_lower() in item.get("id", "").to_lower():
-			filtered[item.get("rawId", "")] = true
+			filtered[_key(item)] = true
 	return filtered
 
 #---------------------------------------------------
