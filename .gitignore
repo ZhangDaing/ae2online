@@ -30,3 +30,10 @@ Applied-Energistics-2-forge-1.20.1/
 # addons
 addons/
 godot/export/
+
+# 构建产物（体积大，通过 Releases 分发而非版本库）
+export/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.exe
+*.apk
