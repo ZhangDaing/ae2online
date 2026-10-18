@@ -1,0 +1,55 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "MC: 启动客户端 (runClient)",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["runClient"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "MC: 启动服务端 (runServer)",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["runServer"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "MC: 构建 (build)",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["build"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "MC: 清理 (clean)",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["clean"],
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}

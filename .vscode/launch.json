@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "MC: 启动客户端 (runClient)",
+            "type": "java-terminal",
+            "request": "launch",
+            "command": ".\\gradlew.bat runClient",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "MC: 启动服务端 (runServer)",
+            "type": "java-terminal",
+            "request": "launch",
+            "command": ".\\gradlew.bat runServer",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "MC: 构建 (build)",
+            "type": "java-terminal",
+            "request": "launch",
+            "command": ".\\gradlew.bat build",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
