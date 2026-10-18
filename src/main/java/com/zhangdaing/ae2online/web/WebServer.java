@@ -53,7 +53,10 @@ public class WebServer {
 
     public WebServer(int port) throws IOException {
         this.port = port;
-        this.server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+        // 监听地址来自配置：默认 127.0.0.1（仅本机），改成 0.0.0.0 或具体网卡 IP 才对外提供服务
+        String bind = com.zhangdaing.ae2online.Config.bindAddress;
+        if (bind == null || bind.isBlank()) bind = "127.0.0.1";
+        this.server = HttpServer.create(new InetSocketAddress(bind.trim(), port), 0);
         server.createContext("/", (exchange) -> handle(exchange));
         server.setExecutor(Executors.newFixedThreadPool(8));
     }
@@ -79,7 +82,7 @@ public class WebServer {
                 ex.sendResponseHeaders(204, -1);
                 return;
             }
-            if (origin != null && !(origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1"))) {
+            if (origin != null && !originAllowed(origin)) {
                 sendText(ex, 403, "Forbidden");
                 return;
             }
@@ -105,17 +108,41 @@ public class WebServer {
     }
 
     // ---------- 工具 ----------
+    /**
+     * 读取请求体里的 count 字段。
+     * 缺失或非数字时返回 -1，让调用方按“参数错误”返回 400，而不是抛 NPE 掉进通用异常处理。
+     */
+    private long readCount(Map<String, Object> b) {
+        Object v = b.get("count");
+        return v instanceof Number n ? n.longValue() : -1L;
+    }
+
     private String token(HttpExchange ex) {
         String a = ex.getRequestHeaders().getFirst("Authorization");
         return a != null && a.startsWith("Bearer ") ? a.substring(7) : null;
     }
 
+    /**
+     * 判断浏览器来源是否允许。
+     * 默认放行 localhost / 127.0.0.1；Config.allowedOrigins 里的条目作为额外白名单。
+     * Godot 桌面客户端不发 Origin 头，走 origin == null 的分支，不受影响。
+     */
+    private boolean originAllowed(String origin) {
+        if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) return true;
+        var extra = com.zhangdaing.ae2online.Config.allowedOrigins;
+        if (extra == null) return false;
+        for (String allowed : extra) {
+            if (allowed != null && !allowed.isBlank() && origin.equals(allowed.trim())) return true;
+        }
+        return false;
+    }
+
     private void cors(HttpExchange ex, String origin) {
-        if (origin != null && (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1"))) {
+        if (origin != null && originAllowed(origin)) {
             ex.getResponseHeaders().set("Access-Control-Allow-Origin", origin);
             ex.getResponseHeaders().set("Access-Control-Allow-Credentials", "true");
             ex.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-            ex.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            ex.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization");
         }
     }
 
@@ -183,7 +210,19 @@ public class WebServer {
             }
         }
         if (matched == null) {
+            // 区分「凭据不对」与「终端根本没接入网络」：后者时注册表为空，
+            // 只回「认证失败」会让用户误以为账号密码写错了
+            if (TerminalRegistry.getAllTerminals().isEmpty()) {
+                sendJson(ex, 503, Map.of("error",
+                        "没有在线的终端：请确认线上终端方块已接入 ME 网络并有可用频道"));
+                return;
+            }
             sendText(ex, 401, "认证失败");
+            return;
+        }
+        // 双重保险：注册表里的终端理应在线，若此刻已掉线则明确拒绝
+        if (!matched.isOnline()) {
+            sendJson(ex, 503, Map.of("error", "终端已离线：请检查 ME 网络供电与频道"));
             return;
         }
         sendJson(ex, 200, Map.of("token", TokenRegistry.createToken(matched)));
@@ -251,7 +290,7 @@ public class WebServer {
         if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
         Map<String, Object> b = body(ex);
         String rawId = (String) b.get("rawId");
-        long amount = ((Number) b.get("count")).longValue();
+        long amount = readCount(b);
         if (rawId == null || amount <= 0) { sendJson(ex, 400, Map.of("error", "参数错误")); return; }
         var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(rawId));
         if (item == null) { sendJson(ex, 400, Map.of("error", "无效的物品ID")); return; }
@@ -279,7 +318,7 @@ public class WebServer {
         if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
         Map<String, Object> b = body(ex);
         String rawId = (String) b.get("rawId");
-        long amount = ((Number) b.get("count")).longValue();
+        long amount = readCount(b);
         if (rawId == null || amount <= 0) { sendJson(ex, 400, Map.of("error", "参数错误")); return; }
         var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(rawId));
         if (item == null) { sendJson(ex, 400, Map.of("error", "无效的物品ID")); return; }

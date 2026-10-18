@@ -7,6 +7,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
@@ -59,7 +60,8 @@ public class AE2OnlineJadePlugin implements IWailaPlugin {
         public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
             CompoundTag data = accessor.getServerData();
             if (data != null && data.contains(TAG_STATE, Tag.TAG_BYTE)) {
-                Component text = switch (State.values()[data.getByte(TAG_STATE)]) {
+                // withStyle 定义在 MutableComponent 上，Component 接口没有该方法
+                MutableComponent text = switch (State.values()[data.getByte(TAG_STATE)]) {
                     case ONLINE -> Component.literal("设备在线");
                     case OFFLINE -> Component.literal("设备离线");
                     case MISSING_CHANNEL -> Component.literal("缺少频道");

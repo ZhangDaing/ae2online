@@ -30,20 +30,26 @@ public class OnlineTerminalScreen extends Screen {
         int cx = (width - w) / 2, cy = (height - h) / 2;
 
         String defaultUrl = "http://127.0.0.1:8080";
-        String defaultUsername = "admin";
 
+        // 注意：方块实体里未配置时字段是空字符串 "" 而非 null，
+        // 因此必须用 isBlank() 判断，否则默认值永远不会显示。
+        // 只有 URL 给默认值；用户名与密码留空，由使用者自行填写。
         urlBox = new EditBox(font, cx + 30, cy + 15, w - 20, 20, Component.literal("URL"));
-        urlBox.setValue(url != null ? url : defaultUrl);
+        urlBox.setValue(isBlank(url) ? defaultUrl : url);
         usernameBox = new EditBox(font, cx + 30, cy + 40, w - 20, 20, Component.literal("Username"));
-        usernameBox.setValue(username != null ? username : defaultUsername);
+        usernameBox.setValue(isBlank(username) ? "" : username);
         passwordBox = new EditBox(font, cx + 30, cy + 65, w - 20, 20, Component.literal("Password"));
-        passwordBox.setValue(password);
+        passwordBox.setValue(isBlank(password) ? "" : password);
 
         addWidget(urlBox); addWidget(usernameBox); addWidget(passwordBox);
 
         // 保存按钮
         addRenderableWidget(Button.builder(Component.literal("保存"), b -> save())
             .bounds(cx + w - 60, cy + 90, 60, 20).build());
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 
     private void save() {

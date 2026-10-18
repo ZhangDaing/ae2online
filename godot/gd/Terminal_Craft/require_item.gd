@@ -3,8 +3,8 @@ extends Control
 @onready var icon_texture = $IconTexture
 @onready var require_label = $RequireLabel
 
-# 后端地址
-const BACKEND_URL = "http://127.0.0.1:11595"
+# 后端地址：由 craft_confirm 在创建耗材行时注入
+var base_url: String = ""
 
 var require_data: Dictionary = {}
 #---------------------------------------------------
@@ -32,10 +32,12 @@ func _refresh() -> void:
 func _load_icon(icon_url: String) -> void:
     if icon_url == "":
         return
+    if base_url == "":
+        return
     var loader = HTTPRequest.new()
     add_child(loader)
     loader.request_completed.connect(_on_icon_loaded.bind(loader))
-    var error = loader.request(BACKEND_URL + icon_url)
+    var error = loader.request(base_url + icon_url)
     if error != OK:
         loader.queue_free()
 

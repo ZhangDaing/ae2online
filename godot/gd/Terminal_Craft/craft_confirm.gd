@@ -15,8 +15,6 @@ extends Control
 
 # 预加载耗材行场景
 const REQUIRE_ITEM_SCENE = preload("res://tscn/Terminal_Craft/require_item.tscn")
-# 后端地址
-const BACKEND_URL = "http://127.0.0.1:11595"
 
 # 数据
 var _url = ""
@@ -109,11 +107,13 @@ func _fill_items(data: Dictionary) -> void:
 	# 可用数量 = usedItems（从存储能提取的量）
 	for m in data.get("used", []):
 		var row = REQUIRE_ITEM_SCENE.instantiate()
+		row.base_url = _url
 		row.set_data(m)
 		item_container.add_child(row)
 	# 缺失的材料（若需要单独展示）
 	for m in data.get("missing", []):
 		var row = REQUIRE_ITEM_SCENE.instantiate()
+		row.base_url = _url
 		row.set_data(m)
 		item_container.add_child(row)
 #---------------------------------------------------

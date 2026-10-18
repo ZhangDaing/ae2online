@@ -127,6 +127,7 @@ func refresh_cards(items: Array) -> void:
 		else:
 			# 如果卡片不存在，则创建新的卡片
 			var new_card = CARD_SCENCE.instantiate()
+			new_card.base_url = _url
 			new_card.set_data(item)
 			card_container.add_child(new_card)
 			card_cache[item_id] = new_card

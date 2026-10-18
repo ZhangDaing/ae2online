@@ -3,8 +3,9 @@ extends Control
 @onready var icon_texture = $IconTexture
 @onready var count_label = $CountLabel
 
-# 后端请求地址
-const BACKEND_URL = "http://127.0.0.1:11595"
+# 后端请求地址：由父容器在创建卡片时注入（登录成功后拿到的 URL）
+# 不再硬编码，避免端口与终端配置不一致导致图标 404
+var base_url: String = ""
 
 var card_data: Dictionary = {}
 #---------------------------------------------------
@@ -39,7 +40,10 @@ func load_cover() -> void:
 	var icon_url = card_data.get("icon","")
 	if icon_url == "":
 		return
-	var full_url = BACKEND_URL + icon_url
+	if base_url == "":
+		# 未注入后端地址（例如卡片在登录前创建），跳过图标加载
+		return
+	var full_url = base_url + icon_url
 	var loader = HTTPRequest.new()
 	add_child(loader)
 	loader.request_completed.connect(_on_cover_loaded.bind(loader))

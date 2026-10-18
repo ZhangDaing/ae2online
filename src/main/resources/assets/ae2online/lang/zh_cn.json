@@ -1,4 +1,5 @@
 {
     "block.ae2online.online_terminal": "线上终端",
-    "item.ae2online.online_terminal": "线上终端"
+    "item.ae2online.online_terminal": "线上终端",
+    "config.jade.plugin_ae2online.grid_state": "线上终端状态"
 }
