@@ -85,7 +85,7 @@ public class UpdateTerminalPacket {
         if (bind.equals("127.0.0.1") || bind.equals("localhost")) {
             sender.sendSystemMessage(Component.literal("  当前仅本机可访问（bindAddress = " + bind + "）。")
                     .withStyle(ChatFormatting.GRAY));
-            sender.sendSystemMessage(Component.literal("  客户端填：http://127.0.0.1:" + port)
+            sender.sendSystemMessage(Component.literal("  客户端填：https://127.0.0.1:" + port)
                     .withStyle(ChatFormatting.WHITE));
             sender.sendSystemMessage(Component.literal("  如需手机/其他电脑访问，把 config 里 bindAddress 改成 0.0.0.0")
                     .withStyle(ChatFormatting.YELLOW));
@@ -108,14 +108,16 @@ public class UpdateTerminalPacket {
 
         sender.sendSystemMessage(Component.literal("  客户端（手机/其他电脑）可填以下地址：")
                 .withStyle(ChatFormatting.GRAY));
+        // 与当前服务协议保持一致：HTTPS 开启时给 https 地址
+        String scheme = com.zhangdaing.ae2online.Config.enableHttps ? "https://" : "http://";
         int shown = 0;
         for (String ip : ips) {
             if (shown >= 4) break; // 避免刷屏
-            sender.sendSystemMessage(Component.literal("    http://" + ip + ":" + port)
+            sender.sendSystemMessage(Component.literal("    " + scheme + ip + ":" + port)
                     .withStyle(ChatFormatting.WHITE));
             shown++;
         }
-        sender.sendSystemMessage(Component.literal("  本机自测可用：http://127.0.0.1:" + port)
+        sender.sendSystemMessage(Component.literal("  本机自测可用：" + scheme + "127.0.0.1:" + port)
                 .withStyle(ChatFormatting.DARK_GRAY));
     }
 }

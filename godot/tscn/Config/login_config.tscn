@@ -24,7 +24,7 @@ text = "网络地址"
 [node name="LineEdit" type="TextEdit" parent="UrlInput" unique_id=1603054628]
 custom_minimum_size = Vector2(384, 0)
 layout_mode = 2
-text = "http://127.0.0.1:11595"
+text = "https://127.0.0.1:11595"
 
 [node name="UsernameInput" type="HBoxContainer" parent="." unique_id=1497166406]
 layout_mode = 2

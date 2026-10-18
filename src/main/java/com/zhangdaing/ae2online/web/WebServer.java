@@ -16,6 +16,7 @@ import com.google.gson.reflect.TypeToken;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsServer;
 
 import com.zhangdaing.ae2online.UI.TokenRegistry;
 import com.zhangdaing.ae2online.blockentity.OnlineTerminalBlockEntity;
@@ -49,22 +50,64 @@ public class WebServer {
 
     private final HttpServer server;
     private final int port;
+    private final boolean https;
     private volatile boolean running = false;
 
     public WebServer(int port) throws IOException {
         this.port = port;
-        // 监听地址来自配置：默认 127.0.0.1（仅本机），改成 0.0.0.0 或具体网卡 IP 才对外提供服务
+        // 监听地址来自配置：默认 0.0.0.0（局域网可访问），改 127.0.0.1 则仅本机
         String bind = com.zhangdaing.ae2online.Config.bindAddress;
-        LOGGER.info("WebServer(port={}) 读取 Config.bindAddress = {}", port, bind == null ? "null" : "'" + bind + "'");
         if (bind == null || bind.isBlank()) {
-            LOGGER.warn("Config.bindAddress 未加载（为 null/空），回退到 127.0.0.1。"
-                    + "如果配置里写了 0.0.0.0，说明 ModConfigEvent 没有正确同步该值。");
+            LOGGER.warn("Config.bindAddress 未加载（为 null/空），回退到 127.0.0.1。");
             bind = "127.0.0.1";
         }
-        this.server = HttpServer.create(new InetSocketAddress(bind.trim(), port), 0);
-        LOGGER.info("WebServer(port={}) 实际绑定 {}:{}", port, bind.trim(), port);
+        InetSocketAddress addr = new InetSocketAddress(bind.trim(), port);
+
+        // HTTPS 模式：Godot Web 版需要安全上下文才能启动
+        boolean wantHttps = com.zhangdaing.ae2online.Config.enableHttps;
+        HttpsServer httpsServer = null;
+        if (wantHttps) {
+            httpsServer = tryCreateHttps(addr);
+        }
+        this.https = httpsServer != null;
+
+        if (httpsServer != null) {
+            this.server = httpsServer;
+            LOGGER.info("WebServer 已启动（HTTPS）: https://{}:{}", bind.trim(), port);
+        } else {
+            if (wantHttps) {
+                LOGGER.warn("HTTPS 启动失败，已回退 HTTP。浏览器中的 Godot Web 版将无法运行（安全上下文限制）。");
+            }
+            this.server = HttpServer.create(addr, 0);
+            LOGGER.info("WebServer 已启动（HTTP）: http://{}:{}", bind.trim(), port);
+        }
         server.createContext("/", (exchange) -> handle(exchange));
         server.setExecutor(Executors.newFixedThreadPool(8));
+    }
+
+    /** 尝试创建 HTTPS 服务器；证书不可用时返回 null 由调用方回退 HTTP */
+    private static HttpsServer tryCreateHttps(InetSocketAddress addr) {
+        try {
+            java.nio.file.Path configDir = net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get();
+            java.security.KeyStore ks = SelfSignedCert.ensure(configDir);
+            if (ks == null) {
+                LOGGER.error("无法准备证书，HTTPS 不可用（详见上方日志）");
+                return null;
+            }
+            String pass = new String(SelfSignedCert.STORE_PASS);
+            javax.net.ssl.KeyManagerFactory kmf =
+                    javax.net.ssl.KeyManagerFactory.getInstance(javax.net.ssl.KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(ks, pass.toCharArray());
+            javax.net.ssl.SSLContext ctx = javax.net.ssl.SSLContext.getInstance("TLS");
+            ctx.init(kmf.getKeyManagers(), null, null);
+
+            HttpsServer s = HttpsServer.create(addr, 0);
+            s.setHttpsConfigurator(new com.sun.net.httpserver.HttpsConfigurator(ctx));
+            return s;
+        } catch (Throwable t) {
+            LOGGER.error("创建 HTTPS 服务器失败", t);
+            return null;
+        }
     }
 
     public void start() {
@@ -73,12 +116,17 @@ public class WebServer {
     }
 
     public void stop() {
-        server.stop(0);
+        try {
+            server.stop(0);
+        } catch (Exception e) {
+            LOGGER.debug("停止 WebServer 异常（可忽略）", e);
+        }
         running = false;
     }
 
     public int getPort() { return port; }
     public boolean isRunning() { return running; }
+    public boolean isHttps() { return https; }
 
     private void handle(HttpExchange ex) throws IOException {
         try {
@@ -131,17 +179,50 @@ public class WebServer {
 
     /**
      * 判断浏览器来源是否允许。
-     * 默认放行 localhost / 127.0.0.1；Config.allowedOrigins 里的条目作为额外白名单。
-     * Godot 桌面客户端不发 Origin 头，走 origin == null 的分支，不受影响。
+     *
+     * 规则：
+     *   1. 同源请求无条件放行 —— 内嵌 Web UI 就是从本服务加载的页面，
+     *      它发的请求 Origin 必然是 https://<本机地址>:<端口>，必须允许，
+     *      否则 Web 版无法登录/取数据（此前只匹配 http:// 导致 HTTPS 下 403）。
+     *   2. localhost / 127.0.0.1 的 http 与 https 均放行。
+     *   3. Config.allowedOrigins 里的条目作为额外白名单。
+     *
+     * Godot 桌面/移动客户端不发 Origin 头，走 origin == null 的分支，不受影响。
      */
     private boolean originAllowed(String origin) {
-        if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) return true;
+        if (origin == null || origin.isBlank()) return false;
+
+        // 同源：Origin 的主机端口与本服务监听的地址一致
+        if (isSameOrigin(origin)) return true;
+
+        // 本机（http / https 都认）
+        String lower = origin.toLowerCase();
+        if (lower.startsWith("http://localhost") || lower.startsWith("https://localhost")
+                || lower.startsWith("http://127.0.0.1") || lower.startsWith("https://127.0.0.1")) {
+            return true;
+        }
+
         var extra = com.zhangdaing.ae2online.Config.allowedOrigins;
         if (extra == null) return false;
         for (String allowed : extra) {
-            if (allowed != null && !allowed.isBlank() && origin.equals(allowed.trim())) return true;
+            if (allowed != null && !allowed.isBlank() && origin.equalsIgnoreCase(allowed.trim())) return true;
         }
         return false;
+    }
+
+    /** 判断 Origin 是否指向本服务的端口（同源） */
+    private boolean isSameOrigin(String origin) {
+        try {
+            java.net.URI uri = new java.net.URI(origin);
+            int p = uri.getPort();
+            if (p == -1) {
+                p = "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+            }
+            // 端口一致即认为是访问本服务的页面
+            return p == this.port;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void cors(HttpExchange ex, String origin) {
@@ -259,10 +340,18 @@ public class WebServer {
         }
         if (Files.exists(icon)) {
             byte[] data = Files.readAllBytes(icon);
+            // Web 版（跑在浏览器里）通过 HTTPRequest 取图标属于跨源请求，
+            // 必须带 CORS 头，否则浏览器会丢弃响应导致图标全部空白。
+            cors(ex, ex.getRequestHeaders().getFirst("Origin"));
             ex.getResponseHeaders().set("Content-Type", "image/png");
+            // 图标内容不变，允许浏览器缓存，减少重复请求
+            ex.getResponseHeaders().set("Cache-Control", "public, max-age=86400");
             ex.sendResponseHeaders(200, data.length);
             try (OutputStream os = ex.getResponseBody()) { os.write(data); }
-        } else sendText(ex, 404, "Not Found");
+        } else {
+            cors(ex, ex.getRequestHeaders().getFirst("Origin"));
+            sendText(ex, 404, "Not Found");
+        }
     }
 
     /** jar 内 Web UI 资源的根路径（Web 版 jar 才有，标准版为 null） */
@@ -296,6 +385,9 @@ public class WebServer {
             return;
         }
 
+        // 内嵌 Web UI 一般是同源加载，但显式带上 CORS 更稳妥
+        // （例如把页面挂到别的源、或用 file:// 打开时也能工作）
+        cors(ex, ex.getRequestHeaders().getFirst("Origin"));
         ex.getResponseHeaders().set("Content-Type", mimeType(rel));
         // wasm / pck 体积较大，允许浏览器缓存
         if (rel.endsWith(".wasm") || rel.endsWith(".pck")) {

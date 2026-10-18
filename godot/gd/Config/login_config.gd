@@ -25,10 +25,27 @@ func get_data() -> Dictionary:
 # 写入数据
 func set_data(data: Dictionary) -> void:
 	_loading = true
-	url_input.text = data.get("url", "")
+	var saved: String = data.get("url", "")
+	# 没有保存过地址时，用「智能默认值」：Web 版用当前页面地址，桌面版用本机 https
+	url_input.text = saved if saved != "" else default_server_url()
 	username_input.text = data.get("username", "")
 	password_input.text = data.get("password", "")
 	_loading = false
+
+#---------------------------------------------------
+# 生成默认服务器地址
+#
+# Web 版（浏览器里运行）：必须用当前页面的 host。
+#   页面从 https://192.168.31.195:11595/ 加载，就用这个地址；
+#   若填 127.0.0.1，浏览器会把它解析成「用户自己的设备」，连不上服务器。
+# 桌面/移动客户端：用 https://127.0.0.1:11595（本机服务器）。
+static func default_server_url() -> String:
+	if OS.has_feature("web"):
+		# 浏览器环境：取当前页面地址（含协议、主机、端口）
+		var href: String = str(JavaScriptBridge.eval("window.location.origin", true))
+		if href != "" and href != "null":
+			return href
+	return "https://127.0.0.1:11595"
 #---------------------------------------------------
 # 请求token
 func login() -> void:

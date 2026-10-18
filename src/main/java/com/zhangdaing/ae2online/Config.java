@@ -27,6 +27,15 @@ public class Config
                         "也可填本机某个网卡的具体 IP，只在该网卡上监听")
             .define("bindAddress", "0.0.0.0");
 
+    public static final ForgeConfigSpec.BooleanValue ENABLE_HTTPS = BUILDER
+            .comment("是否启用 HTTPS（自签名证书，默认开启）",
+                        "浏览器只把 https:// 和 localhost 视为「安全上下文」，",
+                        "而 Godot Web 版（浏览器里运行的界面）必须在安全上下文中才能启动。",
+                        "开启后首次启动会自动生成自签名证书到 config/ae2online-cert.p12。",
+                        "浏览器首次访问会提示「连接不是私密连接」，点「高级 → 继续访问」即可。",
+                        "关闭则使用 HTTP：桌面客户端/Android 客户端仍可用，但浏览器中的 Web 版无法运行。")
+            .define("enableHttps", true);
+
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ALLOWED_ORIGINS = BUILDER
             .comment("额外允许的浏览器跨域来源（CORS）",
                         "默认只允许 localhost / 127.0.0.1",
@@ -39,6 +48,7 @@ public class Config
     // 静态字段
     public static String iconPath;
     public static String bindAddress;
+    public static boolean enableHttps;
     public static List<String> allowedOrigins;
 
     @SubscribeEvent
@@ -49,6 +59,7 @@ public class Config
         iconPath = ICON_PATH.get();
         // 同步监听地址与跨域白名单
         bindAddress = BIND_ADDRESS.get();
+        enableHttps = ENABLE_HTTPS.get();
         allowedOrigins = List.copyOf(ALLOWED_ORIGINS.get());
     }
 }
