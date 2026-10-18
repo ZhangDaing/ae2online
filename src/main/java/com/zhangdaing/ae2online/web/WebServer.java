@@ -239,6 +239,17 @@ public class WebServer {
             return;
         }
         Path icon = Paths.get("./" + com.zhangdaing.ae2online.Config.iconPath, filename);
+        if (!Files.exists(icon)) {
+            // 回退：去掉 NBT 后缀（__{...}）再找基础图标。
+            // icon-exporter 只导出特定 NBT 状态的图标（如满电 20000 的便携元件），
+            // 实际物品的 NBT 状态往往不同（部分电量、内存卡存了数据），此时回退到无 NBT 版本；
+            // 伪装板等 NBT 精确命中的仍走上面的精确匹配，不受影响。
+            String plain = filename.replaceFirst("__\\{.*\\}\\.png$", ".png");
+            if (!plain.equals(filename)) {
+                Path fallback = Paths.get("./" + com.zhangdaing.ae2online.Config.iconPath, plain);
+                if (Files.exists(fallback)) icon = fallback;
+            }
+        }
         if (Files.exists(icon)) {
             byte[] data = Files.readAllBytes(icon);
             ex.getResponseHeaders().set("Content-Type", "image/png");
