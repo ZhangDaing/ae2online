@@ -55,8 +55,14 @@ public class WebServer {
         this.port = port;
         // 监听地址来自配置：默认 127.0.0.1（仅本机），改成 0.0.0.0 或具体网卡 IP 才对外提供服务
         String bind = com.zhangdaing.ae2online.Config.bindAddress;
-        if (bind == null || bind.isBlank()) bind = "127.0.0.1";
+        LOGGER.info("WebServer(port={}) 读取 Config.bindAddress = {}", port, bind == null ? "null" : "'" + bind + "'");
+        if (bind == null || bind.isBlank()) {
+            LOGGER.warn("Config.bindAddress 未加载（为 null/空），回退到 127.0.0.1。"
+                    + "如果配置里写了 0.0.0.0，说明 ModConfigEvent 没有正确同步该值。");
+            bind = "127.0.0.1";
+        }
         this.server = HttpServer.create(new InetSocketAddress(bind.trim(), port), 0);
+        LOGGER.info("WebServer(port={}) 实际绑定 {}:{}", port, bind.trim(), port);
         server.createContext("/", (exchange) -> handle(exchange));
         server.setExecutor(Executors.newFixedThreadPool(8));
     }
@@ -98,6 +104,7 @@ public class WebServer {
             else {
                 Matcher m = ICON_RE.matcher(path);
                 if ("GET".equals(method) && m.matches()) icon(ex, m.group(1));
+                else if ("GET".equals(method)) staticResource(ex, path);
                 else sendText(ex, 404, "Not Found");
             }
         } catch (Exception e) {
@@ -256,6 +263,111 @@ public class WebServer {
             ex.sendResponseHeaders(200, data.length);
             try (OutputStream os = ex.getResponseBody()) { os.write(data); }
         } else sendText(ex, 404, "Not Found");
+    }
+
+    /** jar 内 Web UI 资源的根路径（Web 版 jar 才有，标准版为 null） */
+    private static final String WEB_RESOURCE_ROOT = "/assets/ae2online/web/";
+
+    /**
+     * 提供内嵌 Web UI 静态资源。
+     *
+     * 同一份代码同时支持两种 jar：
+     *   - Web 版：jar 内含 assets/ae2online/web/*，访问 / 返回 index.html
+     *   - 标准版：资源不存在，返回一段说明文字，提示使用桌面/移动客户端
+     */
+    private void staticResource(HttpExchange ex, String path) throws IOException {
+        // 根路径映射到 index.html
+        String rel = "/".equals(path) ? "index.html" : path.substring(1);
+
+        // 防路径穿越
+        if (rel.isEmpty() || rel.contains("..") || rel.contains("\\")) {
+            sendText(ex, 400, "Bad Request");
+            return;
+        }
+
+        byte[] data = readWebResource(rel);
+        if (data == null) {
+            // 标准版 jar：没有内嵌 Web UI
+            if ("index.html".equals(rel)) {
+                sendHtml(ex, 200, noWebUiPage());
+            } else {
+                sendText(ex, 404, "Not Found");
+            }
+            return;
+        }
+
+        ex.getResponseHeaders().set("Content-Type", mimeType(rel));
+        // wasm / pck 体积较大，允许浏览器缓存
+        if (rel.endsWith(".wasm") || rel.endsWith(".pck")) {
+            ex.getResponseHeaders().set("Cache-Control", "public, max-age=3600");
+        }
+        ex.sendResponseHeaders(200, data.length);
+        try (OutputStream os = ex.getResponseBody()) { os.write(data); }
+    }
+
+    /** 从 jar 内读取 Web UI 资源；不存在返回 null（说明是标准版 jar） */
+    private static byte[] readWebResource(String relPath) {
+        try (var in = WebServer.class.getResourceAsStream(WEB_RESOURCE_ROOT + relPath)) {
+            return in == null ? null : in.readAllBytes();
+        } catch (IOException e) {
+            LOGGER.warn("读取内嵌 Web 资源失败: {}", relPath, e);
+            return null;
+        }
+    }
+
+    private static String mimeType(String name) {
+        String n = name.toLowerCase();
+        if (n.endsWith(".html")) return "text/html; charset=utf-8";
+        if (n.endsWith(".js") || n.endsWith(".mjs")) return "text/javascript; charset=utf-8";
+        if (n.endsWith(".wasm")) return "application/wasm";
+        if (n.endsWith(".pck")) return "application/octet-stream";
+        if (n.endsWith(".css")) return "text/css; charset=utf-8";
+        if (n.endsWith(".png")) return "image/png";
+        if (n.endsWith(".svg")) return "image/svg+xml";
+        if (n.endsWith(".json")) return "application/json; charset=utf-8";
+        if (n.endsWith(".ico")) return "image/x-icon";
+        return "application/octet-stream";
+    }
+
+    private void sendHtml(HttpExchange ex, int status, String html) throws IOException {
+        byte[] body = html.getBytes(StandardCharsets.UTF_8);
+        ex.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
+        ex.sendResponseHeaders(status, body.length);
+        try (OutputStream os = ex.getResponseBody()) { os.write(body); }
+    }
+
+    /** 标准版 jar 访问根路径时显示的说明页 */
+    private static String noWebUiPage() {
+        return """
+                <!DOCTYPE html>
+                <html lang="zh-CN">
+                <head>
+                  <meta charset="utf-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1">
+                  <title>AE2 Online</title>
+                  <style>
+                    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+                           background: #1e1e1e; color: #ddd; margin: 0;
+                           display: flex; align-items: center; justify-content: center;
+                           min-height: 100vh; }
+                    .card { max-width: 520px; padding: 32px; line-height: 1.7; }
+                    h1 { color: #4ec9b0; font-size: 22px; margin: 0 0 16px; }
+                    code { background: #2d2d2d; padding: 2px 6px; border-radius: 3px; color: #ce9178; }
+                    .hint { color: #888; font-size: 14px; margin-top: 20px; }
+                  </style>
+                </head>
+                <body>
+                  <div class="card">
+                    <h1>AE2 Online — API 服务运行中</h1>
+                    <p>当前安装的是<strong>标准版</strong>模组，未内置 Web 界面。</p>
+                    <p>如需在浏览器中直接使用，请改用 <code>ae2online-*-web.jar</code>。</p>
+                    <p>也可以使用桌面客户端或 Android 客户端连接：</p>
+                    <p><code>http://本机IP:端口</code></p>
+                    <div class="hint">API 接口仍可正常使用（/login、/storage、/cpu 等）。</div>
+                  </div>
+                </body>
+                </html>
+                """;
     }
 
     private void login(HttpExchange ex) throws IOException {

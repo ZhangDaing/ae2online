@@ -139,11 +139,31 @@ public class OnlineTerminalBlockEntity extends AENetworkBlockEntity {
         super.onChunkUnloaded();
     }
 
-    /** 解析 URL 中的端口；供同包/注册表判定端口占用情况使用。 */
-    int parsePortFromUrl() {
+    /**
+     * 解析终端配置里保存的端口。
+     * 兼容两种历史格式：
+     *   - 纯端口数字，如 "8080"（新格式，界面已改为填端口）
+     *   - 完整 URL，如 "http://127.0.0.1:8080"（旧存档里的格式，保持向后兼容）
+     *
+     * @return 端口号；无法解析时返回 -1
+     */
+    public int parsePortFromUrl() {
         if (url == null || url.isBlank()) return -1;
+        String trimmed = url.trim();
+
+        // 格式一：纯数字端口
+        if (trimmed.matches("\\d{1,5}")) {
+            try {
+                int port = Integer.parseInt(trimmed);
+                return (port > 0 && port <= 65535) ? port : -1;
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+
+        // 格式二：完整 URL（旧存档兼容）
         try {
-            URI uri = new URI(url);
+            URI uri = new URI(trimmed);
             int port = uri.getPort();
             if (port == -1) {
                 String scheme = uri.getScheme();
@@ -151,7 +171,7 @@ public class OnlineTerminalBlockEntity extends AENetworkBlockEntity {
             }
             return port;
         } catch (Exception e) {
-            LOGGER.warn("Failed to parse port from URL '{}': {}", url, e.getMessage());
+            LOGGER.warn("Failed to parse port from '{}': {}", url, e.getMessage());
             return -1;
         }
     }

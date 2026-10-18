@@ -152,6 +152,122 @@ tasks.named('jar', Jar).configure {
 //     dependsOn 'reobfJar'
 // }
 
+// ============================================================
+// Web 版 jar（内嵌浏览器 UI）
+//
+// 用法：
+//   ./gradlew build      → 只产标准版 ae2online-<ver>.jar
+//   ./gradlew webJar     → 产 Web 版 ae2online-<ver>-web.jar（需先导出 Godot Web 产物）
+//   ./gradlew buildAll   → 两个都产
+//
+// Web 资源来源：godot/export/web/（Godot 的 Web 导出输出目录）
+// 打包进 jar 的 assets/ae2online/web/，运行时由 WebServer 从 jar 内读取。
+// ============================================================
+
+def webSourceDir = file('godot/export/web')
+def webJarResources = 'assets/ae2online/web'
+def webPatchedDir = layout.buildDirectory.dir('web-patched')
+
+// ============================================================
+// Web 产物准备（直接复制，不再打补丁）
+//
+// 历史：曾在此处给 index.js 打补丁绕过 Secure Context 检查，
+// 但绕过 isSecureContext 后 AudioWorklet 在非安全上下文中仍不可用，
+// 会连锁报错（Cannot read properties of undefined (reading 'addModule')）。
+// 现已改为由模组内置 HTTPS（自签名证书）从根上满足安全上下文要求，
+// 因此不再需要任何 JS 补丁，此处只做文件复制。
+// ============================================================
+tasks.register('prepareWebAssets') {
+    group = 'build'
+    description = '准备 Godot Web 产物（原样复制，不打补丁）'
+
+    onlyIf { webSourceDir.exists() }
+
+    def srcDir = webSourceDir
+    def outDir = webPatchedDir
+    inputs.dir(srcDir).optional()
+    outputs.dir(outDir)
+
+    doLast {
+        def target = outDir.get().asFile
+        if (target.exists()) { delete target }
+        target.mkdirs()
+        copy {
+            from srcDir
+            into target
+        }
+        def count = target.listFiles()?.length ?: 0
+        logger.lifecycle("Web 资源已就绪: ${count} 个文件（未打补丁，依赖 HTTPS 满足安全上下文）")
+    }
+}
+
+// 关键：必须基于 reobf 后的标准版 jar（SRG 名）重新打包，
+// 否则会带上 official 映射的字段名（如 Blocks.IRON_BLOCK），
+// 在正式环境中运行时报 NoSuchFieldError。
+tasks.register('webJar', Jar) {
+    group = 'build'
+    description = '构建内嵌 Web UI 的模组 jar（基于已重混淆的标准版 jar）'
+
+    // 等标准版 jar 及其 reobf 完成；并先准备好 Web 产物
+    dependsOn tasks.named('build')
+    dependsOn tasks.named('prepareWebAssets')
+
+    archiveBaseName = "${mod_id}"
+    archiveVersion = "${mod_version}"
+    archiveClassifier = 'web'
+    destinationDirectory = file('build/libs')
+
+    // 取出 reobf 后的标准版 jar 内容（不含 META-INF，避免签名冲突）
+    from({ zipTree(tasks.named('jar').get().archiveFile.get().asFile) }) {
+        exclude 'META-INF/MANIFEST.MF'
+        exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+    }
+
+    // 把打过补丁的 Godot Web 产物塞进 assets/ae2online/web/
+    if (webSourceDir.exists()) {
+        from(webPatchedDir) {
+            into webJarResources
+        }
+    }
+
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'AE2Online-WebUI'         : 'embedded'
+        ])
+    }
+
+    doFirst {
+        if (!webSourceDir.exists()) {
+            logger.warn("⚠ Web 资源目录不存在: ${webSourceDir}")
+            logger.warn("  请先导出 Godot Web 版到该目录，否则生成的 jar 不含 Web UI。")
+        } else {
+            def count = fileTree(webSourceDir).files.size()
+            def sizeMb = (fileTree(webSourceDir).files.sum { it.length() } / 1024 / 1024)
+            logger.lifecycle("内嵌 Web 资源: ${count} 个文件, ${String.format('%.1f', sizeMb)} MB")
+        }
+    }
+
+    doLast {
+        // 自检：确认打包进来的 class 用的是 SRG 名而不是 official 名
+        def jarFile = archiveFile.get().asFile
+        logger.lifecycle("Web 版 jar: ${jarFile.name} (${String.format('%.1f', jarFile.length() / 1024 / 1024)} MB)")
+    }
+}
+
+tasks.register('buildAll') {
+    group = 'build'
+    description = '构建标准版和 Web 版两个 jar'
+    dependsOn tasks.named('build')
+    dependsOn tasks.named('webJar')
+}
+
 // Example configuration to allow publishing using the maven-publish plugin
 publishing {
     publications {

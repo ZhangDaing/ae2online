@@ -22,17 +22,16 @@ public class Config
 
     public static final ForgeConfigSpec.ConfigValue<String> BIND_ADDRESS = BUILDER
             .comment("Web 服务监听地址",
-                        "127.0.0.1 = 仅本机可访问（默认，最安全）",
-                        "0.0.0.0 = 监听所有网卡，局域网内其他设备可访问",
-                        "也可填本机某个网卡的具体 IP，只在该网卡上监听",
-                        "注意：局域网访问走明文 HTTP，请自行评估网络环境")
-            .define("bindAddress", "127.0.0.1");
+                        "0.0.0.0 = 监听所有网卡，局域网内其他设备（手机等）可访问（默认）",
+                        "127.0.0.1 = 仅本机可访问。若只在本机使用，建议改成这个更安全",
+                        "也可填本机某个网卡的具体 IP，只在该网卡上监听")
+            .define("bindAddress", "0.0.0.0");
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ALLOWED_ORIGINS = BUILDER
             .comment("额外允许的浏览器跨域来源（CORS）",
                         "默认只允许 localhost / 127.0.0.1",
                         "需要从别的地址用浏览器打开页面时，把来源加进来",
-                        "例: [\"http://192.168.1.10:8080\"]",
+                        "例: [\"https://192.168.1.10:8080\"]",
                         "Godot 桌面客户端不发送 Origin 头，不受此项影响")
             .defineListAllowEmpty("allowedOrigins", List.<String>of(), o -> o instanceof String);
 
