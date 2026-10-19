@@ -6,7 +6,7 @@
 
 | 组件 | 说明 |
 |---|---|
-| **Forge 模组**（服务端） | 提供「线上终端」方块与 HTTPS API；web 版内嵌浏览器界面 |
+| **Forge 模组**（服务端） | 提供「线上终端」方块与数据服务；web 版内嵌浏览器界面 |
 | **Windows 客户端** | 桌面主力，无需安装 |
 | **Android 客户端** | 手机/平板使用 |
 | **浏览器 Web 版** | 任意设备临时访问，装了模组即可用 |
@@ -34,7 +34,6 @@
 | Forge | 47.4.10+ |
 | **AE2**（Applied Energistics 2） | 15.4.10（必需） |
 | **GuideME** | 20.1.7（AE2 依赖） |
-| Java | 17+（服务端，需含 `keytool` 用于生成 HTTPS 证书），21（构建） |
 
 可选依赖：
 
@@ -59,13 +58,12 @@
 
 #### 两个 jar 版本怎么选
 
-| 文件 | 大小 | 含 Web UI | 适用 |
-|---|---|---|---|
-| `ae2online-1.0.0.jar` | ~60 KB | ❌ | 只用 Windows / Android 客户端 |
-| `ae2online-1.0.0-web.jar` | ~12 MB | ✅ | 想用浏览器直接访问 |
+| 文件 | 含 Web UI | 适用 |
+|---|---|---|
+| `ae2online-1.0.0.jar` | ❌ | 只用 Windows / Android 客户端 |
+| `ae2online-1.0.0-web.jar` | ✅ | 想用浏览器直接访问 |
 
-> web 版是标准版的超集：API 完全一致，额外内嵌了浏览器界面。
-> 装 web 版后，Windows / Android 客户端同样可以正常连接。
+> web 版是标准版的超集：额外内嵌了浏览器界面，Windows / Android 客户端同样可以连接。
 
 ### 客户端
 
@@ -75,9 +73,7 @@
 | Android | `ae2online.apk` | 需允许「安装未知来源应用」 |
 | 浏览器 | 无需下载 | 装 web 版 jar 后访问 `https://服务器IP:端口/` |
 
-两种客户端都可分发到局域网内的其他设备使用。
-
-> 从源码导出客户端见下文「从源码构建」。
+三种方式都可从局域网内的其他设备使用。
 
 ---
 
@@ -113,25 +109,15 @@
 
 ### 3. 局域网访问设置（重要）
 
-`bindAddress` 默认已是 `0.0.0.0`（监听所有网卡，局域网可直接访问）。如需限制为仅本机：
+`bindAddress` 默认已是 `0.0.0.0`，局域网内可直接访问，**通常无需修改**。
 
-编辑 `config/ae2online-common.toml`：
+如需限制为仅本机，编辑 `config/ae2online-common.toml`，把 `bindAddress` 改为 `"127.0.0.1"`，然后**重启游戏**。
 
-```toml
-# 0.0.0.0 = 局域网可访问（默认）
-# 127.0.0.1 = 仅本机，更安全
-bindAddress = "0.0.0.0"
-
-# 是否启用 HTTPS（默认开启）
-# 浏览器中的 Web 版必须在 HTTPS 下才能运行（Secure Context 限制）
-enableHttps = true
-```
-
-改完**重启游戏** 生效。
+> 完整配置项说明见下方「配置项」章节。
 
 #### HTTPS 与自签名证书
 
-`enableHttps = true`（默认）时，首次启动会调用 JDK 的 `keytool` 自动生成自签名证书到 `config/ae2online-cert.p12`，之后复用。
+`enableHttps = true`（默认）时，首次启动会自动生成自签名证书到 `config/ae2online-cert.p12`，之后复用。
 
 - 证书 10 年有效，SAN 自动包含本机所有局域网 IPv4 + `127.0.0.1` + `localhost`
 - **浏览器首次访问会提示「连接不是私密连接」**，这是自签名证书的正常现象：
@@ -146,14 +132,14 @@ enableHttps = true
 
 #### 三种客户端
 
-| 客户端 | 适用场景 | 说明 |
-|---|---|---|
+| 客户端 | 文件 |
+|---|---|
 | **Windows 客户端** | `ae2online.exe` |
 | **Android 客户端** | `ae2online.apk` |
-| **浏览器 Web 版** | 使用含 Web UI 的模组 jar，浏览器直接打开 |
+| **浏览器 Web 版** | 装 web 版 jar 后直接打开网页 |
 
 > Windows 与 Android 客户端**不需要**模组内置 Web UI（标准版 jar 即可）。
-> Web 版需要 `ae2online-*-web.jar`（体积约 12 MB，内含浏览器界面）。
+> Web 版需要 `ae2online-*-web.jar`（内含浏览器界面）。
 
 #### 使用浏览器访问（Web 版）
 
@@ -163,7 +149,7 @@ enableHttps = true
 4. 跳过证书警告（见上节）后进入登录界面
 5. **URL 会自动填成当前页面地址**，只需输入用户名密码
 
-> Web 版首次加载需下载约 40 MB 的 wasm，请耐心等待。
+> Web 版首次加载需下载约 40 MB 的程序文件，请耐心等待。
 
 #### 桌面 / 移动客户端
 
@@ -197,23 +183,16 @@ enableHttps = true
 **⑥ 主题**
 - 设置面板中切换深色/浅色主题
 
-### 6. 导出物品图标（显示贴图用）
+### 5. 导出物品图标（显示贴图用）
 
 物品图标由 **icon-exporter** 模组导出，供客户端显示贴图。**未导出图标的物品会显示空白**。
 
 1. 安装 icon-exporter 模组（服务端 `mods/`）
-2. 进入游戏，执行：
-   ```
-   /iconexporter export scale:64
-   ```
-   （参数格式可输 `/iconexporter export ` 后按 Tab 补全确认）
-3. 图标 PNG 会导出到游戏目录的 `icon-exports-x64/`（与配置项 `iconPath` 对应）
+2. 进入游戏，执行 `/iconexporter export scale:64`
+3. 图标会导出到游戏目录的 `icon-exports-x64/` 文件夹
 4. 重启客户端即可显示
 
-> **提示**：
-> - 新增模组后需**重新导出**一次图标
-> - 伪装板等带 NBT 的物品：导出会生成带 NBT 后缀的图标文件；服务端会自动匹配，找不到时回退到基础图标
-> - 修改 `iconPath` 配置后，导出目录与客户端读取目录需保持一致
+> **提示**：新增模组后需要重新导出一次图标，否则新模组的物品没有贴图。
 
 ---
 
@@ -235,7 +214,6 @@ enableHttps = true
 
 # 额外允许的浏览器跨域来源（CORS）
 # 同源请求与 localhost / 127.0.0.1 默认放行，一般无需配置
-# Godot 桌面客户端不发送 Origin 头，不受此项影响
 allowedOrigins = []
 ```
 
