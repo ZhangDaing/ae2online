@@ -74,6 +74,20 @@ public class OnlineTerminalScreen extends Screen {
         // 保存按钮
         addRenderableWidget(Button.builder(Component.literal("保存"), b -> save())
             .bounds(cx + w - 60, cy + 90, 60, 20).build());
+
+        // 导出图标按钮（客户端功能；本界面本就是客户端 Screen，直接调用即可）
+        addRenderableWidget(Button.builder(Component.literal("导出图标"), b -> exportIcons())
+            .bounds(cx + w - 140, cy + 90, 76, 20).build());
+    }
+
+    /** 触发图标导出，然后关闭本界面让导出界面接管 */
+    private void exportIcons() {
+        Boolean started = net.minecraftforge.fml.DistExecutor.unsafeCallWhenOn(
+                net.minecraftforge.api.distmarker.Dist.CLIENT,
+                () -> () -> com.zhangdaing.ae2online.command.ClientExportBridge.startExport(64, ""));
+        if (!Boolean.TRUE.equals(started)) {
+            errorText = "导出未能启动（可能已有任务在运行）";
+        }
     }
 
     private static boolean isBlank(String s) {

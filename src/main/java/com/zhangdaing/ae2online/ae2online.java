@@ -64,6 +64,9 @@ public class ae2online
         // 注册网络消息
         Networking.register();
 
+        // 注册 /ae2online 命令（图标导出等）
+        MinecraftForge.EVENT_BUS.addListener(com.zhangdaing.ae2online.command.AE2OnlineCommand::onRegisterCommands);
+
         MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
             WebServerManager.stopAll();
         });
