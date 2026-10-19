@@ -13,25 +13,25 @@ import net.minecraft.world.item.ItemStack;
 /**
  * 图标导出专用界面。
  *
- * 布局：物品渲染在左上角固定区域，进度信息全部画在它下方，绝不重叠
- *      （否则截出来的图会带上进度条像素）。
+ * 完全照 icon-exporter 的做法：
+ *   物品必须画在屏幕 **左上角 (0,0)**，尺寸 = iconSize。
+ *   截图后直接从 (0,0) 裁 iconSize × iconSize，不需要任何坐标换算
+ *   （guiScale=1 时天然对齐；guiScale>1 时按倍数放大裁剪后缩回）。
  *
- * 两帧流水（关键，否则会截到上一帧的错误内容）：
- *   帧 N   ：render() 把当前物品画进画面，随后 markFrameRendered()
- *   帧 N+1 ：render() 开头先 captureAndSave()（此时 framebuffer 里已是帧 N 的画面），
- *            再画下一个物品
+ * 截图时机：在同一 render() 里"画完物品后立刻截"，与 icon-exporter 一致。
+ *
+ * 进度 UI 画在物品区域 **下方**，避免被截进去。
  */
 public class IconExportScreen extends Screen {
 
-    /** 背景色；导出时整屏填充，之后按此色扣成透明 */
-    public static final int BACKGROUND_COLOR = 0xFF1A1A1A;
-    /** 渲染区左上角 */
-    public static final int RENDER_X = 8;
-    public static final int RENDER_Y = 8;
+    /** 背景色：品红（罕见色，便于可靠抠图；避免与物品本身颜色冲突） */
+    public static final int BACKGROUND_COLOR = 0xFFFF00FF;
+    /** 物品渲染原点 —— 必须是 (0,0)，与截图裁剪原点对齐 */
+    public static final int RENDER_X = 0;
+    public static final int RENDER_Y = 0;
 
     private final List<ItemStack> items;
-    /** 是否已经画过至少一帧（第一帧只画不截） */
-    private boolean firstFrameDrawn = false;
+    private boolean closing = false;
 
     public IconExportScreen(List<ItemStack> items) {
         super(Component.literal("AE2 Online - 导出图标"));
@@ -40,61 +40,69 @@ public class IconExportScreen extends Screen {
 
     @Override
     protected void init() {
-        // 无子控件，全部自绘；告知导出器渲染上下文
-        ItemIconExporter.setRenderContext(RENDER_X, RENDER_Y, BACKGROUND_COLOR);
+        ItemIconExporter.setBackgroundColor(BACKGROUND_COLOR);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         var p = ItemIconExporter.progress();
-
-        // ---- 帧 N+1 开头：先把上一帧的画面截下来 ----
-        if (firstFrameDrawn) {
-            ItemIconExporter.captureAndSave();
-            p = ItemIconExporter.progress();
-            if (p.state != ItemIconExporter.State.RUNNING) {
+        if (p.state != ItemIconExporter.State.RUNNING) {
+            if (!closing) {
+                closing = true;
                 notifyPlayer(p.message);
                 this.onClose();
-                return;
             }
+            graphics.fill(0, 0, this.width, this.height, 0xFF000000);
+            return;
         }
 
-        // ---- 整屏纯色背景 ----
-        graphics.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
-
-        // ---- 画当前物品（渲染区 = RENDER_X/Y 起 16 逻辑像素 × 倍数） ----
-        ItemStack current = ItemIconExporter.currentItem();
         int iconSize = ItemIconExporter.iconSize();
-        if (current != null) {
-            int mult = iconSize / 16;
+        ItemStack current = ItemIconExporter.currentItem();
+
+        // ---------- 1. 整屏黑色（界面观感） ----------
+        graphics.fill(0, 0, this.width, this.height, 0xFF000000);
+
+        // ---------- 2. 只把「截图区域」涂成品红 ----------
+        // 品红仅用于可靠抠图，所以只覆盖 (0,0)-(iconSize,iconSize) 这一小块，
+        // 其余区域留黑，避免整个界面变成刺眼的紫色。
+        if (iconSize > 0) {
+            graphics.fill(RENDER_X, RENDER_Y,
+                    RENDER_X + iconSize, RENDER_Y + iconSize,
+                    BACKGROUND_COLOR);
+        }
+
+        // ---------- 3. 物品画在 (0,0)，缩放到 iconSize ----------
+        if (current != null && iconSize > 0) {
+            int mult = Math.max(1, iconSize / 16);
             PoseStack pose = graphics.pose();
             pose.pushPose();
-            pose.translate(RENDER_X, RENDER_Y, 0);
             pose.scale(mult, mult, 1.0f);
-            graphics.renderItem(current, 0, 0);
+            graphics.renderItem(current, RENDER_X, RENDER_Y);
             pose.popPose();
         }
 
-        // ---- 进度信息（渲染区下方，避免被截图） ----
-        int textY = RENDER_Y + iconSize + 10;
+        // ---------- 4. 立刻截图（同帧，从 (0,0) 裁） ----------
+        ItemIconExporter.captureAndSaveNow();
+
+        // ---------- 5. 进度 UI（画在物品区下方，不影响截图） ----------
+        int textY = Math.max(iconSize, 16) + 20;
         var font = this.font;
+        var p2 = ItemIconExporter.progress();
+
         graphics.drawString(font, "AE2 Online 图标导出", 8, textY, 0xFFFFFF);
 
         String line = String.format("%d / %d    已写入 %d    跳过 %d",
-                Math.min(p.done, p.total), p.total, p.written, p.skipped);
+                Math.min(p2.done, p2.total), p2.total, p2.written, p2.skipped);
         graphics.drawString(font, line, 8, textY + 14, 0xCCCCCC);
 
         int barW = Math.min(320, Math.max(120, this.width - 16));
         int barY = textY + 30;
         graphics.fill(8, barY, 8 + barW, barY + 6, 0xFF333333);
-        int filled = p.total <= 0 ? 0 : (int) ((long) barW * Math.min(p.done + 1, p.total) / p.total);
+        int progress = p2.total <= 0 ? 0 : Math.min(p2.done + 1, p2.total);
+        int filled = p2.total <= 0 ? 0 : (int) ((long) barW * progress / p2.total);
         graphics.fill(8, barY, 8 + filled, barY + 6, 0xFF4EC9B0);
 
         graphics.drawString(font, "ESC 取消", 8, barY + 14, 0x888888);
-
-        // ---- 标记本帧已渲染，下一帧可以截图 ----
-        firstFrameDrawn = true;
-        ItemIconExporter.markFrameRendered();
     }
 
     private void notifyPlayer(String msg) {

@@ -16,6 +16,8 @@ signal terminal_logged(url: String, token: Dictionary)
 signal terminal_choosed(index: int)
 signal terminal_storage_updated(items: Array)
 signal terminal_cpus_updated(cpus: Array)
+# 登录失败提示（界面上显示，避免静默失败）
+signal login_failed(message: String)
 
 # 合成请求信号
 signal item_clicked(card_data: Dictionary)

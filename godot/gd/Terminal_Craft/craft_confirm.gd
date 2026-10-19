@@ -1,4 +1,5 @@
 extends Control
+const HttpUtil = preload("res://gd/http_util.gd")
 
 # 节点引用
 @onready var what_label = $What
@@ -75,6 +76,7 @@ func _on_plan_pressed() -> void:
 		"rawId": _item.get("rawId", ""),
 		"count": int(count_spinbox.value),
 	})
+	HttpUtil.allow_self_signed(_http_plan)
 	_http_plan.request(_url + "/craft/plan",
 		[ "Authorization: Bearer " + _token.get("token", ""), "Content-Type: application/json" ],
 		HTTPClient.METHOD_POST, body)
@@ -125,6 +127,7 @@ func _on_craft_pressed() -> void:
 		"count": int(count),
 		"cpu": int(cpu_option.get_selected_id())
 	})
+	HttpUtil.allow_self_signed(_http_craft)
 	_http_craft.request(_url + "/craft",
 		[ "Authorization: Bearer " + _token.get("token", ""), "Content-Type: application/json" ],
 		HTTPClient.METHOD_POST, body)

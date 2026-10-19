@@ -1,4 +1,5 @@
 extends Control
+const HttpUtil = preload("res://gd/http_util.gd")
 
 @onready var icon_texture = $IconTexture
 @onready var require_label = $RequireLabel
@@ -37,6 +38,7 @@ func _load_icon(icon_url: String) -> void:
     var loader = HTTPRequest.new()
     add_child(loader)
     loader.request_completed.connect(_on_icon_loaded.bind(loader))
+    HttpUtil.allow_self_signed(loader)
     var error = loader.request(base_url + icon_url)
     if error != OK:
         loader.queue_free()

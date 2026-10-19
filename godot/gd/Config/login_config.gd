@@ -1,4 +1,5 @@
 extends VBoxContainer
+const HttpUtil = preload("res://gd/http_util.gd")
 
 @onready var url_input = $UrlInput/LineEdit
 @onready var username_input = $UsernameInput/LineEdit
@@ -53,7 +54,12 @@ func login() -> void:
 	_username = username_input.text
 	var password = password_input.text
 
-	http.request(
+	# 服务端使用自签名证书，浏览器会自动提示「继续前往」，
+	# 但 Godot 的 HTTPRequest 默认严格验证证书链，会直接连接失败。
+	# 这里是局域网内部工具，证书由模组自己生成，故跳过验证。
+	_apply_insecure_tls(http)
+
+	var err = http.request(
 		_url + "/login",
 		[ "Content-Type: application/json" ],
 		HTTPClient.METHOD_POST,
@@ -61,22 +67,66 @@ func login() -> void:
 			"username": _username,
 			"password": password
 		}))
+	if err != OK:
+		EventBus.login_failed.emit("请求发送失败（错误码 %d），请检查地址格式" % err)
+
+# 让 HTTPRequest 接受自签名证书（Godot 4.2+ 才有 set_tls_options）
+static func _apply_insecure_tls(req: HTTPRequest) -> void:
+	HttpUtil.allow_self_signed(req)
 
 func _on_login_completed(
-	_result: int, 
+	result: int, 
 	response_code: int, 
 	_headers: PackedStringArray, 
 	body: PackedByteArray
 ) -> void:
-	if response_code != 200:
-		print("登录失败，状态码: ", response_code)
+	# HTTPRequest 层面的失败（连不上、证书被拒、超时等）
+	if result != HTTPRequest.RESULT_SUCCESS:
+		var why := _result_text(result)
+		print("登录失败：", why, "  URL=", _url)
+		EventBus.login_failed.emit("连接失败：%s" % why)
 		return
+
+	if response_code != 200:
+		var detail := ""
+		if body.size() > 0:
+			detail = "（%s）" % body.get_string_from_utf8()
+		print("登录失败，状态码: ", response_code, detail)
+		if response_code == 401:
+			EventBus.login_failed.emit("用户名或密码错误")
+		elif response_code == 503:
+			EventBus.login_failed.emit("服务器无在线终端：请确认终端已接入 ME 网络并有频道")
+		else:
+			EventBus.login_failed.emit("登录失败，状态码 %d%s" % [response_code, detail])
+		return
+
 	var data = JSON.parse_string(body.get_string_from_utf8())
+	if data == null:
+		EventBus.login_failed.emit("返回数据解析失败")
+		return
 	var token = {"token": data.get("token", ""),"id": id}
 	if token["token"] == "":
-		print("登录失败：未返回 token")
+		EventBus.login_failed.emit("登录失败：服务器未返回 token")
 		return
 	EventBus.terminal_logged.emit(_url, token)
+
+# 把 HTTPRequest 的结果码转成可读文字
+static func _result_text(result: int) -> String:
+	match result:
+		HTTPRequest.RESULT_CANT_CONNECT:
+			return "无法连接（地址/端口错误，或服务未启动）"
+		HTTPRequest.RESULT_CANT_RESOLVE:
+			return "无法解析主机名"
+		HTTPRequest.RESULT_CONNECTION_ERROR:
+			return "连接中断"
+		HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR:
+			return "TLS 握手失败（证书问题）"
+		HTTPRequest.RESULT_NO_RESPONSE:
+			return "服务器无响应"
+		HTTPRequest.RESULT_TIMEOUT:
+			return "请求超时"
+		_:
+			return "错误码 %d" % result
 
 #---------------------------------------------------
 # 监听输入变化

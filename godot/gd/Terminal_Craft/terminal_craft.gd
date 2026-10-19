@@ -1,4 +1,5 @@
 extends Control
+const HttpUtil = preload("res://gd/http_util.gd")
 #---------------------------------------------------
 # 网络请求节点
 @onready var http_request = $HTTPRequest
@@ -56,6 +57,7 @@ func request_data() -> void:
 		return
 	requesting = true
 	var url = _url + "/craftable"
+	HttpUtil.allow_self_signed(http_request)
 	var error = http_request.request(url,
 		[ "Authorization: Bearer " + _token.get("token", "") ],
 		HTTPClient.METHOD_GET)

@@ -1,4 +1,5 @@
 extends Control
+const HttpUtil = preload("res://gd/http_util.gd")
 
 @onready var icon_texture = $IconTexture
 @onready var count_label = $CountLabel
@@ -47,6 +48,7 @@ func load_cover() -> void:
 	var loader = HTTPRequest.new()
 	add_child(loader)
 	loader.request_completed.connect(_on_cover_loaded.bind(loader))
+	HttpUtil.allow_self_signed(loader)
 	var error = loader.request(full_url)
 	if error != OK:
 		loader.queue_free()

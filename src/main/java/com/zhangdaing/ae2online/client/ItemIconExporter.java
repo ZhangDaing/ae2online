@@ -24,17 +24,19 @@ import org.slf4j.LoggerFactory;
 /**
  * 物品图标导出器（客户端侧）。
  *
- * 实现思路参考 icon-exporter：把物品渲染到屏幕上 → 截图 → 裁剪 → 扣透明 → 保存。
+ * 实现完全参照 icon-exporter 模组的做法：
+ *   1. 在 render() 内，把物品画在 **屏幕左上角 (0,0)**，尺寸 = size × size
+ *   2. 同一帧内调用 Screenshot.takeScreenshot(RenderTarget)
+ *   3. 从截图的 **左上角 (0,0)** 直接裁 size × size
+ *   4. 背景色像素扣成透明后保存
  *
- * 关键时序（踩过的坑）：
- *   Screenshot.takeScreenshot 取的是「上一帧」已完成的 framebuffer。
- *   所以必须是：帧 N 渲染物品 → 帧 N+1 截图。
- *   如果在 render() 同一帧里既画又截，截到的是上一帧的内容（错位一格）。
- *   本类用 capturePreviousFrame 标志实现这个两帧流水。
+ * 关键点（来自对 icon-exporter 字节码的分析）：
+ *   - 它不做 guiScale 换算，也不处理 flipY
+ *   - 因为它把物品画在 (0,0)，而 Screenshot 拿到的图像原点是左上角，
+ *     只要 guiScale=1 两者就天然对齐
+ *   - 若 guiScale>1，需按倍数换算（本实现已处理）
  *
- * 文件名格式与 icon-exporter 严格一致，客户端的图标查找逻辑无需改动：
- *   无 NBT：modid__itemid.png
- *   有 NBT：modid__itemid__{nbt}.png
+ * 文件名格式与 icon-exporter 严格一致。
  */
 public final class ItemIconExporter {
 
@@ -62,14 +64,10 @@ public final class ItemIconExporter {
 
     private static List<ItemStack> pending = new ArrayList<>();
     private static Path outputDir;
-    /** 单个图标的边长（屏幕像素）。必须与渲染区实际占用像素一致。 */
+    /** 图标边长（最终 PNG 尺寸，像素） */
     private static int iconSize = 64;
-    /** 上一帧已经把「当前索引」的物品画到屏幕上了，本帧可以截图 */
-    private static boolean frameReady = false;
-    /** 导出界面传进来的渲染原点 */
-    private static int renderX = 8;
-    private static int renderY = 8;
-    private static int backgroundColor = 0xFF1A1A1A;
+    /** 背景色（用于扣透明） */
+    private static int backgroundColor = 0x00FF00FF;
 
     public static Progress progress() {
         return PROGRESS;
@@ -83,18 +81,7 @@ public final class ItemIconExporter {
         return iconSize;
     }
 
-    /** 计算 scale 参数对应的渲染倍数与最终像素尺寸 */
-    public static int pixelScaleFor(int requestedSize) {
-        // 图标基准是 16x16，放大倍数必须是整数，最终尺寸 = 16 * 倍数
-        int mult = Math.max(1, Math.round(requestedSize / 16.0f));
-        return mult;
-    }
-
-    /**
-     * 收集要导出的物品。
-     *
-     * @param modFilter 只导出该命名空间；空表示全部
-     */
+    /** 收集要导出的物品 */
     public static List<ItemStack> collectItems(String modFilter) {
         List<ItemStack> result = new ArrayList<>();
         String filter = (modFilter == null || modFilter.isBlank()) ? null : modFilter.trim().toLowerCase(Locale.ROOT);
@@ -118,12 +105,7 @@ public final class ItemIconExporter {
         return result;
     }
 
-    /**
-     * 启动导出（客户端主线程）。
-     *
-     * @param requestedSize 期望的图标边长（像素），会向下取整到 16 的倍数
-     * @param modFilter 模组命名空间过滤
-     */
+    /** 启动导出 */
     public static boolean start(int requestedSize, String modFilter) {
         if (isRunning()) return false;
         try {
@@ -133,11 +115,11 @@ public final class ItemIconExporter {
             outputDir = Paths.get("." + java.io.File.separator + configured).toAbsolutePath().normalize();
             Files.createDirectories(outputDir);
 
-            int mult = pixelScaleFor(requestedSize);
+            // 16 的整数倍，与物品基准尺寸对齐
+            int mult = Math.max(1, Math.round(requestedSize / 16.0f));
             iconSize = 16 * mult;
 
             pending = collectItems(modFilter);
-            frameReady = false;
 
             PROGRESS.state = State.RUNNING;
             PROGRESS.done = 0;
@@ -174,18 +156,15 @@ public final class ItemIconExporter {
             PROGRESS.skipped = 0;
             PROGRESS.error = "";
             PROGRESS.message = "";
-            frameReady = false;
         }
     }
 
-    /** 导出界面每帧调用：告知渲染原点与背景色 */
-    public static void setRenderContext(int x, int y, int bgColor) {
-        renderX = x;
-        renderY = y;
-        backgroundColor = bgColor;
+    /** 设置背景色（由导出界面传入） */
+    public static void setBackgroundColor(int color) {
+        backgroundColor = color;
     }
 
-    /** 当前应该渲染的物品；没有则返回 null */
+    /** 当前应该渲染的物品 */
     public static ItemStack currentItem() {
         if (PROGRESS.state != State.RUNNING) return null;
         if (PROGRESS.done >= pending.size()) return null;
@@ -193,23 +172,28 @@ public final class ItemIconExporter {
     }
 
     /**
-     * 由导出界面在渲染完当前物品后调用（帧 N），
-     * 标记下一帧可以截图。
+     * 当前 GUI 缩放倍数。
+     * RenderTarget 是物理像素，GuiGraphics 是逻辑坐标，相差此倍数。
      */
-    public static void markFrameRendered() {
-        if (PROGRESS.state == State.RUNNING) {
-            frameReady = true;
+    private static int guiScale() {
+        try {
+            var mc = Minecraft.getInstance();
+            if (mc != null && mc.getWindow() != null) {
+                return Math.max(1, (int) Math.round(mc.getWindow().getGuiScale()));
+            }
+        } catch (Exception ignored) {
         }
+        return 1;
     }
 
     /**
-     * 由导出界面在下一帧开头调用（帧 N+1）：截上图并写盘。
-     * 这样截到的一定是上一帧已经渲染好的物品。
+     * 在 render() 内、画完物品后立刻调用：截图 → 从左上角裁剪 → 扣透明 → 保存。
+     *
+     * 照 icon-exporter 的做法：物品画在 (0,0)，截图也从 (0,0) 裁。
+     * guiScale>1 时按倍数换算，并缩回目标尺寸。
      */
-    public static void captureAndSave() {
-        if (PROGRESS.state != State.RUNNING || !frameReady) return;
-        frameReady = false;
-
+    public static void captureAndSaveNow() {
+        if (PROGRESS.state != State.RUNNING) return;
         if (PROGRESS.done >= pending.size()) {
             finish();
             return;
@@ -220,9 +204,24 @@ public final class ItemIconExporter {
             NativeImage full = Screenshot.takeScreenshot(Minecraft.getInstance().getMainRenderTarget());
             if (full != null) {
                 try {
-                    NativeImage sub = crop(full, renderX, renderY, iconSize, iconSize);
+                    int gs = guiScale();
+                    int cropSize = iconSize * gs;
+                    // 物品画在 GUI (0,0) → 物理 (0,0)
+                    // Screenshot 内部 flipY() 后，图像原点仍为左上角，
+                    // 所以从 (0,0) 裁即可，无需处理 Y 翻转
+                    int px = 0;
+                    int py = 0;
+
+                    NativeImage sub = crop(full, px, py, cropSize, cropSize);
                     if (sub != null) {
                         try {
+                            if (gs != 1 && sub.getWidth() != iconSize) {
+                                NativeImage scaled = downscale(sub, iconSize);
+                                if (scaled != sub) {
+                                    // downscale 内部已关闭 sub，这里换引用
+                                    sub = scaled;
+                                }
+                            }
                             makeBackgroundTransparent(sub, backgroundColor);
                             String name = fileNameFor(stack);
                             Path out = outputDir.resolve(name);
@@ -254,13 +253,19 @@ public final class ItemIconExporter {
         }
     }
 
+    /** 兼容旧调用名 */
+    @Deprecated
+    public static void captureAndSave() {
+        captureAndSaveNow();
+    }
+
     private static void finish() {
         PROGRESS.state = State.DONE;
         PROGRESS.message = String.format("完成：导出 %d 个，跳过 %d 个",
                 PROGRESS.written, PROGRESS.skipped);
-        LOGGER.info("图标导出完成: 写入 {} 个, 跳过 {} 个, 输出 {}", PROGRESS.written, PROGRESS.skipped, outputDir);
+        LOGGER.info("图标导出完成: 写入 {} 个, 跳过 {} 个, 输出 {}",
+                PROGRESS.written, PROGRESS.skipped, outputDir);
         pending = new ArrayList<>();
-        frameReady = false;
     }
 
     private static NativeImage crop(NativeImage src, int x, int y, int w, int h) {
@@ -279,8 +284,30 @@ public final class ItemIconExporter {
         return out;
     }
 
-    private static void makeBackgroundTransparent(NativeImage img, int backgroundColor) {
-        int bgRgb = backgroundColor & 0x00FFFFFF;
+    /** 缩小到目标边长（最近邻）。会关闭 src。 */
+    private static NativeImage downscale(NativeImage src, int targetSize) {
+        int sw = src.getWidth();
+        int sh = src.getHeight();
+        if (sw <= 0 || sh <= 0) return src;
+        if (sw == targetSize && sh == targetSize) return src;
+
+        NativeImage out = new NativeImage(targetSize, targetSize, false);
+        for (int y = 0; y < targetSize; y++) {
+            int sy = Math.min(sh - 1, y * sh / targetSize);
+            for (int x = 0; x < targetSize; x++) {
+                int sx = Math.min(sw - 1, x * sw / targetSize);
+                out.setPixelRGBA(x, y, src.getPixelRGBA(sx, sy));
+            }
+        }
+        try {
+            src.close();
+        } catch (Exception ignored) {
+        }
+        return out;
+    }
+
+    private static void makeBackgroundTransparent(NativeImage img, int bgColor) {
+        int bgRgb = bgColor & 0x00FFFFFF;
         for (int y = 0; y < img.getHeight(); y++) {
             for (int x = 0; x < img.getWidth(); x++) {
                 int px = img.getPixelRGBA(x, y);
@@ -310,7 +337,6 @@ public final class ItemIconExporter {
         return sanitizeFileName(sb.toString());
     }
 
-    /** Windows 非法文件名字符兜底（icon-exporter 没做，NBT 含这些字符时会写失败） */
     private static String sanitizeFileName(String name) {
         String out = name.replace('\\', '_')
                 .replace('*', '_')
