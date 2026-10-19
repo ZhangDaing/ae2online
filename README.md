@@ -42,7 +42,6 @@
 |---|---|
 | **Jade** | 显示终端的网络状态（在线/离线/缺频道） |
 | **icon-exporter** | 导出物品图标，供客户端显示贴图 |
-| JEI | 合成配方查询（开发环境） |
 
 
 ---
@@ -84,36 +83,17 @@
 
 ## 使用方法
 
-### 1. 合成「线上终端」
+### 1. 放置与接线
 
-在合成台中按以下配方合成（材料均来自 AE2 后期）：
-
-```
-A B A
-C D C
-F E F
-```
-
-| 位置 | 材料 |
-|---|---|
-| A | 量子纠缠奇点（Quantum Entangled Singularity） |
-| B | 无线接收器（Wireless Receiver） |
-| C | 合成单元（Crafting Unit） |
-| D | 量子环（Quantum Ring） |
-| E | 无线合成终端（Wireless Crafting Terminal） |
-| F | 无线增幅器（Wireless Booster） |
-
-### 2. 放置与接线
-
-1. 将「线上终端」接入 **ME 网络**（用线缆连接）
+1. 将「线上终端」接入 **ME 网络**
 2. 确保网络**供电**且终端**有可用频道**（终端需要 16 AE/t，且占用 1 个频道）
 3. 用 Jade 查看方块状态：显示 **「设备在线」** 即就绪
    - 「缺少频道」= 网络频道用尽，需要 ME 控制器/精简线缆
    - 「设备离线」= 未供电或未接入网络
 
-> **注意**：终端未接入网络时不会启动 Web 服务，客户端登录会提示「没有在线的终端」。这是设计如此——避免离线终端对外提供无效服务。
+> **注意**：终端未接入网络时不会启动 Web 服务，客户端登录会提示「没有在线的终端」。
 
-### 3. 配置终端
+### 2. 配置终端
 
 **右键**线上终端方块，弹出配置界面：
 
@@ -130,9 +110,8 @@ F E F
 - 不同终端用不同端口也行（如 `8080`、`8081`），便于在客户端区分
 - 监听地址由配置文件 `bindAddress` 决定，与这里填的端口无关（见下节）
 
-> 旧版本存档里保存的是完整 URL（如 `http://127.0.0.1:8080`），升级后会自动兼容，无需重新配置。
 
-### 4. 局域网访问设置（重要）
+### 3. 局域网访问设置（重要）
 
 `bindAddress` 默认已是 `0.0.0.0`（监听所有网卡，局域网可直接访问）。如需限制为仅本机：
 
@@ -148,7 +127,7 @@ bindAddress = "0.0.0.0"
 enableHttps = true
 ```
 
-改完**重启 Minecraft** 生效。
+改完**重启游戏** 生效。
 
 #### HTTPS 与自签名证书
 
@@ -163,15 +142,15 @@ enableHttps = true
 
 > 如需在服务端以纯 HTTP 运行（放弃 Web 版），把 `enableHttps` 改为 `false`。
 
-### 5. 客户端使用
+### 4. 客户端使用
 
 #### 三种客户端
 
 | 客户端 | 适用场景 | 说明 |
 |---|---|---|
-| **Windows 客户端** | 桌面主力 | `ae2online.exe`，无需安装 |
-| **Android 客户端** | 手机/平板 | `ae2online.apk`，需允许安装未知来源应用 |
-| **浏览器 Web 版** | 任意设备临时访问 | 使用含 Web UI 的模组 jar，浏览器直接打开 |
+| **Windows 客户端** | `ae2online.exe` |
+| **Android 客户端** | `ae2online.apk` |
+| **浏览器 Web 版** | 使用含 Web UI 的模组 jar，浏览器直接打开 |
 
 > Windows 与 Android 客户端**不需要**模组内置 Web UI（标准版 jar 即可）。
 > Web 版需要 `ae2online-*-web.jar`（体积约 12 MB，内含浏览器界面）。
@@ -185,7 +164,6 @@ enableHttps = true
 5. **URL 会自动填成当前页面地址**，只需输入用户名密码
 
 > Web 版首次加载需下载约 40 MB 的 wasm，请耐心等待。
-> 浏览器里填写 `127.0.0.1` 会指向**用户自己的设备**，必须用服务器的局域网 IP（Web 版已自动填好）。
 
 #### 桌面 / 移动客户端
 
@@ -259,177 +237,6 @@ enableHttps = true
 # 同源请求与 localhost / 127.0.0.1 默认放行，一般无需配置
 # Godot 桌面客户端不发送 Origin 头，不受此项影响
 allowedOrigins = []
-```
-
----
-
-## API 接口（供开发者）
-
-所有接口返回 JSON，除 `/login` 外均需 `Authorization: Bearer <token>`。
-
-自签名证书环境下，`curl` 需加 `-k` 跳过证书校验。
-
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `/login` | 登录获取 token。请求体 `{"username","password"}` |
-| GET | `/storage` | 存储物品列表（含 `uid`/`rawId`/`icon`/`count`） |
-| GET | `/craftable` | 可合成物品列表 |
-| GET | `/cpu` | 合成 CPU 状态 |
-| POST | `/cpu/cancel` | 取消任务。请求体 `{"index"}` |
-| POST | `/craft/plan` | 计算合成计划。请求体 `{"rawId","count"}` |
-| POST | `/craft` | 下达合成。请求体 `{"rawId","count","cpu"}` |
-| GET | `/icon/<文件名>` | 获取物品图标 PNG |
-| GET | `/` | Web UI（仅 web 版 jar；标准版返回说明页） |
-
-**登录示例**：
-
-```bash
-curl -k -X POST https://127.0.0.1:11595/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"123456"}'
-# 返回 {"token":"<uuid>"}
-
-curl -k https://127.0.0.1:11595/storage \
-  -H "Authorization: Bearer <uuid>"
-```
-
-**错误说明**：
-
-| 状态码 | 含义 |
-|---|---|
-| 401 | 未登录 / 凭据错误 |
-| 503 | 没有在线的终端（未接网络/无频道）或终端已离线 |
-| 400 | 参数错误（如缺少 `count`） |
-
----
-
-## 常见问题
-
-**Q：客户端登录提示「没有在线的终端」？**
-A：终端方块未接入 ME 网络，或网络没供电/没有可用频道。用 Jade 确认方块显示「设备在线」。
-
-**Q：客户端连不上服务端？**
-A：
-1. 确认 `bindAddress` 是 `0.0.0.0`（默认值，局域网可访问）
-2. 确认 Windows 防火墙放行了该端口
-3. 确认客户端填的 URL 是**服务器的局域网 IP**（如 `https://192.168.1.10:11595`），不是 `127.0.0.1`
-4. 协议要与服务端一致：`enableHttps = true` 时用 `https://`
-
-**Q：浏览器打开是空白 / 报 Secure Context 错误？**
-A：Web 版必须通过 **HTTPS** 访问。确认：
-1. 访问的是 `https://` 不是 `http://`
-2. `enableHttps = true`
-3. 已跳过自签名证书的警告
-4. 首次加载需下载约 40 MB wasm，请等待
-5. 强制刷新（`Ctrl+Shift+R`）清除旧缓存
-
-**Q：浏览器提示「连接不是私密连接」？**
-A：自签名证书的正常现象，不是故障。点「高级 → 继续前往」即可。每次新设备首次访问都需要点一次。
-
-**Q：浏览器里的 Web 版登录失败？**
-A：浏览器中 `127.0.0.1` 指向**用户自己的设备**而非服务器。Web 版已自动填充当前页面地址，若手动填写必须用服务器局域网 IP。
-
-**Q：浏览器里物品贴图全空？**
-A：已修复（图标接口此前缺 CORS 头，浏览器会丢弃图片）。如果仍空白，强制刷新或确认用的是最新模组版本。
-
-**Q：物品贴图显示空白？**
-A：未导出图标，见上文「导出物品图标」。新增模组后需重新导出。
-
-**Q：加了新模组后没有图标？**
-A：重新执行 `/iconexporter export`，并重启客户端。
-
-**Q：显示「登录过期」？**
-A：token 已失效（终端离线/被拆/服务重启）。重新登录即可。
-
-**Q：多个终端怎么区分？**
-A：在客户端配置多个登录配置（不同用户名/密码），顶部下拉框切换。同一端口也可以，靠用户名密码区分。
-
-**Q：合成按钮是灰的？**
-A：材料不足（材料清单里有「缺失数量」），或目标 CPU 不可用。
-
-**Q：拆掉终端方块后要重新登录？**
-A：是。方块被拆/离线时其令牌会失效（安全设计），重新登录即可。
-
-**Q：改了 IP / 换了网络，HTTPS 失效？**
-A：自签名证书的 SAN 里记录的是生成时的 IP。删除 `config/ae2online-cert.p12` 后重启，会按新 IP 重新生成。
-
-**Q：服务端日志里有 `keytool 生成证书失败`？**
-A：说明运行环境缺少 `keytool`（精简 JRE）。日志会打印手动生成证书的完整命令，执行后把文件放到 `config/ae2online-cert.p12` 即可；或临时改 `enableHttps = false` 用 HTTP。
-
----
-
-## 从源码构建
-
-**环境**：JDK 17+（推荐 21，需含 `keytool`）、Gradle 8.8（wrapper 自带）
-
-### 构建模组
-
-```bash
-# 标准版（不含 Web UI，约 60 KB）
-./gradlew build
-
-# web 版（内嵌浏览器界面，约 12 MB）—— 需先完成下方「导出 Web 界面」
-./gradlew webJar
-
-# 两个版本一起构建
-./gradlew buildAll
-```
-
-产物：`build/libs/ae2online-1.0.0.jar` 与 `build/libs/ae2online-1.0.0-web.jar`
-
-### 导出客户端
-
-用 Godot 4.7 打开 `godot/` 目录，项目 → 导出，选择预设：
-
-| 预设 | 产物 | 说明 |
-|---|---|---|
-| `Windows Desktop` | `ae2online.exe` | 约 107 MB |
-| `Android` | `ae2online.apk` | 约 30 MB，需 Godot 的 Android 导出模板 |
-| `Web` | `index.html` 等 | 输出到 `godot/export/web/`，供 `webJar` 内嵌 |
-
-### 构建 Web 版 jar 的完整流程
-
-```bash
-# 1. 先在 Godot 里用 Web 预设导出到 godot/export/web/
-# 2. 构建内嵌 Web UI 的 jar
-./gradlew webJar
-```
-
-`webJar` 会：
-- 基于已 reobf 的标准版 jar 打包（避免运行期 `NoSuchFieldError`）
-- 把 `godot/export/web/` 的内容放进 `assets/ae2online/web/`
-- 输出 `build/libs/ae2online-1.0.0-web.jar`
-
-> **不要**给 Godot 导出的 `index.js` 打补丁绕过 Secure Context 检查——
-> 绕过 `isSecureContext` 后 `AudioWorklet` 在非安全上下文仍不可用，会连锁报错。
-> 正确做法是用模组内置的 HTTPS 满足安全上下文要求。
-
-### 发布产物
-
-打包好的 jar / exe / apk 统一放在 `export/`（已在 `.gitignore` 中，不进版本库）。
-发布时上传到 GitHub Releases。
-
-### 其他提示
-
-- 项目根目录 `.vscode/` 已配置 VS Code 任务，按 **Ctrl+Shift+B** 直接启动客户端
-- `gradle.properties` 里固定了 `org.gradle.java.home`，避免 IDE 用过高版本 JDK 导致 Gradle 配置失败
-
----
-
-## 目录结构
-
-```
-├── src/                    Forge 模组（Java）
-│   ├── main/java/...       方块、方块实体、Web 服务、HTTPS、Jade 集成
-│   └── main/resources/     模型、贴图、配方、语言文件
-├── godot/                  Godot 客户端（GDScript）
-│   ├── gd/                 脚本（登录、存储、CPU、合成）
-│   ├── tscn/               场景
-│   │   ├── font/           字体（仅 fusion-pixel 像素字体）
-│   │   └── export/web/     Web 导出产物（供内嵌）
-├── export/                 最终产物 jar/exe/apk（不入库）
-├── Applied-Energistics-2-forge-1.20.1/   AE2 源码（参考用，不入库）
-└── AppliedWebTerminal-main/              参考模组（不入库）
 ```
 
 ---
