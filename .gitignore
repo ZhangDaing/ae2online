@@ -37,3 +37,9 @@ export/
 !gradle/wrapper/gradle-wrapper.jar
 *.exe
 *.apk
+
+# Godot 编辑器缓存（含本机绝对路径，且每次开编辑器都会变）
+godot/.godot/
+
+# 早期 Web 导出残留（正式产物在 godot/export/web/，已忽略）
+godot/*.wasm
