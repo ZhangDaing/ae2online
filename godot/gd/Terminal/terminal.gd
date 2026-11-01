@@ -158,6 +158,16 @@ func filter(items:Array) -> Dictionary:
 # 排序算法
 func sort_items(items:Array) -> Array:
 	var sorted_items = items.duplicate()
+	# 记录原始下标，供「数量排序」在数量相同时保持服务端下发的顺序。
+	#
+	# AE2 的数量排序比较器是 Comparator.comparingDouble(storedAmount / amountPerUnit)，
+	# 没有 thenComparing 之类的次级比较器；并列项的顺序完全依赖排序的稳定性，
+	# 也就是保持存储枚举的原始顺序。Godot 的 sort_custom 不保证稳定，
+	# 因此这里显式用原始下标做并列依据，复现 AE2 的表现。
+	for i in sorted_items.size():
+		var it = sorted_items[i]
+		if it is Dictionary:
+			it["_orig_index"] = i
 	match current_sort_type:
 		SortType.NAME:
 			sorted_items.sort_custom(_sort_by_name)
@@ -175,18 +185,20 @@ func _sort_by_name(a, b) -> bool:
 	return cmp < 0
 
 func _sort_by_amount(a, b) -> bool:
+	# 与 AE2 一致：比较的是「存储量 / 每单位数量」，不是裸数量
 	var amt_a = float(a["count"]) / float(a.get("amountPerUnit", 1))
 	var amt_b = float(b["count"]) / float(b.get("amountPerUnit", 1))
-	var cmp = 0
 
 	if amt_a != amt_b:
-		cmp = amt_a - amt_b
-	else:
-		cmp = _cmp_ignore_case(a.get("id", ""), b.get("id", ""))
+		var cmp = amt_a - amt_b
+		if current_sort_dir == SortDir.DESC:
+			cmp = -cmp
+		return cmp < 0
 
-	if current_sort_dir == SortDir.DESC:
-		cmp = -cmp
-	return cmp < 0
+	# 数量相同：按服务端下发的原始顺序。
+	# 注意 AE2 的 AMOUNT_DESC 是 AMOUNT_ASC.reversed()，reversed 对相等的两项
+	# 仍然返回 0，所以升序降序下并列项都保持原始顺序 —— 这里不做方向反转。
+	return int(a.get("_orig_index", 0)) < int(b.get("_orig_index", 0))
 
 func _sort_by_mod(a, b) -> bool:
 	var cmp = _cmp_ignore_case(a.get("modid", ""), b.get("modid", ""))

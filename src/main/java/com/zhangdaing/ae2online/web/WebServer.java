@@ -262,18 +262,28 @@ public class WebServer {
         if (t == null) { sendJson(ex, 401, Map.of("error", "登录过期")); return; }
         var grid = t.getGrid();
         if (grid == null) { sendJson(ex, 200, Map.of("error", "no terminal connected to a network")); return; }
-        var items = grid.getStorageService().getCachedInventory().keySet().stream().map(key -> {
+        var inventory = grid.getStorageService().getCachedInventory();
+        // 必须直接迭代 KeyCounter，而不是 keySet()。
+        //
+        // AE2 的终端按 KeyCounter 的迭代顺序把条目下发给客户端
+        // （MEStorageMenu -> MEInventoryUpdatePacket.addChanges(availableStacks, ...)），
+        // 而数量排序没有次级比较器，数量相同时的顺序完全取决于这个下发顺序。
+        // keySet() 返回的是 HashSet（无序、按哈希），顺序与 AE2 不一致，
+        // 会导致「数量排序时并列项顺序与原版 AE2 不同」。
+        var items = new java.util.ArrayList<Map<String, Object>>(inventory.size());
+        for (var entry : inventory) {
+            var key = entry.getKey();
             var id = key.getId();
-            return Map.of(
+            items.add(Map.of(
                 "id", key.getDisplayName().getString(),
-                "count", grid.getStorageService().getCachedInventory().get(key),
+                "count", entry.getLongValue(),
                 "icon", "/icon/" + urlEncode(iconFilename(key)),
                 "modid", id.getNamespace(),
                 "amountPerUnit", key.getAmountPerUnit(),
                 // uid 含 NBT，用于区分同物品不同变体（如不同伪装板）；rawId 仅 item id，供合成接口使用
                 "uid", uidOf(key),
-                "rawId", id.toString());
-        }).toList();
+                "rawId", id.toString()));
+        }
         sendJson(ex, 200, Map.of("items", items));
     }
 
