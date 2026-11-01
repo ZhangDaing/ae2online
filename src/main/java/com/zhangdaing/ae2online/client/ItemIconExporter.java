@@ -63,6 +63,8 @@ public final class ItemIconExporter {
     private static final Progress PROGRESS = new Progress();
 
     private static List<ItemStack> pending = new ArrayList<>();
+    /** 本次导出已写过的文件名，用于去重（磁盘已有文件仍会覆盖） */
+    private static final java.util.Set<String> writtenNames = new java.util.HashSet<>();
     private static Path outputDir;
     /** 图标边长（最终 PNG 尺寸，像素） */
     private static int iconSize = 64;
@@ -120,6 +122,7 @@ public final class ItemIconExporter {
             iconSize = 16 * mult;
 
             pending = collectItems(modFilter);
+            writtenNames.clear();
 
             PROGRESS.state = State.RUNNING;
             PROGRESS.done = 0;
@@ -224,10 +227,13 @@ public final class ItemIconExporter {
                             }
                             makeBackgroundTransparent(sub, backgroundColor);
                             String name = fileNameFor(stack);
-                            Path out = outputDir.resolve(name);
-                            if (Files.exists(out)) {
+                            // 同一物品在一次导出中可能重复出现（例如带不同 NBT 生成同名文件），
+                            // 用集合去重；但**磁盘上已存在的文件一律覆盖**，
+                            // 这样重新导出可以修复历史版本留下的坏图，而不是被跳过。
+                            if (!writtenNames.add(name)) {
                                 PROGRESS.skipped++;
                             } else {
+                                Path out = outputDir.resolve(name);
                                 sub.writeToFile(out);
                                 PROGRESS.written++;
                             }
